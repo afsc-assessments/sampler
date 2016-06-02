@@ -60,7 +60,7 @@ Sampler <- function(yr=2014){
   aout <- adf %>% transmute(strata,
                             area,cr=1,mm=1,dd=1,yy=yr,lat=55,lon=-165,age=ifelse(is.na(age),0,age),sex,spp=201,wt,len,x=1,y=1,haul)
   # New format:
-  # aout <- adf %>% transmute(strata, haul, sex, age, wt, len) 
+   aout <- adf %>% transmute(strata, haul, sex, age, wt, len) 
   write.table(aout,aout_file,quote=F,row.names=F,col.names=F)
   #----------------------------------
   # Catch data massage names(ad) ;dim(ad)
