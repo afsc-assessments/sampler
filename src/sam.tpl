@@ -3,8 +3,10 @@ DATA_SECTION
  //        compare different ways to convert between weights at age and numbers
   // init_int year
   int do_check
+  int TowsOnly;
 	int rseed;
  LOCAL_CALCS
+   TowsOnly=0;
   rseed = 123;
   do_check=0;  
   if (argc > 1)
@@ -47,7 +49,7 @@ DATA_SECTION
   init_number sam_level_3; 
 
   !! ad_comm::change_datafile_name(agefile);
-  !! if(do_check) cout<<"Number of age records:  "<< na_rcrds <<endl;
+  !! if(do_check) cout<<"Sampling levels: "<<endl<<sam_level_1<<endl<<sam_level_2<<endl<<sam_level_3<<endl<<"Number of age records:  "<< na_rcrds <<endl;
   !! if(do_check) cout<<"Reading age data..."<<endl;
   init_matrix adata_in(1,na_rcrds,1,16)
   int natows
@@ -64,6 +66,8 @@ DATA_SECTION
   int nsam_max
   !! nsam_max=max(na_sam_tow);
   matrix a_recnum(1,natows,1,nsam_max)
+  int lenpad_bs;
+  int agepad_bs;
  LOCAL_CALCS
   a_recnum.initialize();
   int k=1;
@@ -73,30 +77,25 @@ DATA_SECTION
       k++;
     }
   }
+  lenpad_bs = 9000000;
+  agepad_bs = 800000;
  END_CALCS
-  !! /*
-  !! */
-
-
-  int lenpad_bs;
-  int agepad_bs;
-  !! lenpad_bs = 9000000;
-  !! agepad_bs = 800000;
-
-  //!!if(do_check) cout<<a_tows<<endl;cout<<"END"<<endl;
   matrix adata(1,na_rcrds+agepad_bs,1,16)
   matrix ldata(1,nl_rcrds+lenpad_bs,1,5)
-  !! if (do_check) cout <<"Number of rows from ldata "<<ldata.rowmax()<<endl;
-  !!ldata.initialize();
-  !!adata.initialize();
+ LOCAL_CALCS
+  //!!if(do_check) cout<<a_tows<<endl;cout<<"END"<<endl;
+  if (do_check) cout <<"Number of rows from ldata "<<nl_rcrds<<endl;
+  if (do_check) cout <<"Number of rows from adata "<<na_rcrds<<endl;
+  ldata.initialize();
+  adata.initialize();
+
+  ad_comm::change_datafile_name(lenfile);
+  if(do_check) cout<<"Reading length data..."<<endl;
+ END_CALCS
+  init_matrix ldata_in(1,nl_rcrds,1,5)
   vector ta_ubs(1,natows);
   vector a_ubs(1,na_rcrds+agepad_bs);
   vector l_ubs(1,nl_rcrds+lenpad_bs);
-
-
-  !! ad_comm::change_datafile_name(lenfile);
-  !! if(do_check) cout<<"Reading length data..."<<endl;
-  init_matrix ldata_in(1,nl_rcrds,1,5)
   // !! ldata = ldata_in;
 
   // Strata tow sex length freq
@@ -104,22 +103,24 @@ DATA_SECTION
   !! nltows = max(l_tows);
   vector nlfrq_sam_tow(1,nltows);
   vector nfshl_sam_tow(1,nltows);
-  !! nlfrq_sam_tow.initialize();
-  !! nfshl_sam_tow.initialize();
-  !! for (i=1;i<=nl_rcrds;i++) 
-  !! {
-  !!   nlfrq_sam_tow(l_tows(i))++; // number of LF records for each tow
-  !!   nfshl_sam_tow(l_tows(i))+=ldata_in(i,5); // number of fish recorded for each tow
-  !! }
-  !! if(do_check) cout<<"Nlfrq: "<<sum(nlfrq_sam_tow)<<endl;
-  !! if(do_check) cout<<"Nfshl: "<<sum(nfshl_sam_tow)<<endl;
-  !! nsam_max=max(nlfrq_sam_tow);
-  !! nsam_max=max(nlfrq_sam_tow);
+ LOCAL_CALCS
+  nlfrq_sam_tow.initialize();
+  nfshl_sam_tow.initialize();
+  for (i=1;i<=nl_rcrds;i++) 
+  {
+    nlfrq_sam_tow(l_tows(i))++; // number of LF records for each tow
+    nfshl_sam_tow(l_tows(i))+=ldata_in(i,5); // number of fish recorded for each tow
+  }
+  if(do_check) cout<<"Nlfrq: "<<sum(nlfrq_sam_tow)<<endl;
+  if(do_check) cout<<"Nfshl: "<<sum(nfshl_sam_tow)<<endl;
+  nsam_max=max(nlfrq_sam_tow);
+  nsam_max=max(nlfrq_sam_tow);
+  if(do_check) cout<<"Number of Length tows: "<<nltows<<endl;
+  if(do_check) cout<<"Number of age tows: "<<natows<<endl;
+ END_CALCS
 
   vector tl_ubs(1,nltows);
   matrix l_recnum(1,nltows,1,nsam_max)
-  !! if(do_check) cout<<"Number of Length tows: "<<nltows<<endl;
-  !! if(do_check) cout<<"Number of age tows: "<<natows<<endl;
 
  LOCAL_CALCS
   l_recnum.initialize();
@@ -175,7 +176,7 @@ DATA_SECTION
   // 1       2       3    4   5  6    7   8     9  10  11  12  13       14     15
   // Vess  Area  Depth Month Day yy  lat long  age sex spp wt  length  specno  samplesystem
      random_number_generator rng(rseed);
-     // Set up simulation loop here...if sims=0 then NOTE there is a zeroth simulation!!!
+   // Set up simulation loop here...if sims=0 then NOTE there is a zeroth simulation!!!
    // lf_out <<"Sim year stratum sex length freq prop " <<endl; // avg_wt nwt_samples nlen_samples naged"<<endl;
    lf_out <<"Sim year stratum sex length freq prop avg_wt nwt_samples nlen_samples naged"<<endl;
    for (int isim=1;isim<=nsims;isim++) 
@@ -191,11 +192,20 @@ DATA_SECTION
      }
      else
      {
+       // if (TowsOnly) 
+       // {
+         // a_ubs.fill_seqadd(1,1); 
+         // l_ubs.fill_seqadd(1,1); 
+       // }
+       // else
+       {
+         a_ubs.fill_randu(rng);
+         l_ubs.fill_randu(rng);
+       }
+       // cout<<l_ubs<<endl;exit(1);
        ta_ubs.fill_randu(rng);
        tl_ubs.fill_randu(rng);
 
-       a_ubs.fill_randu(rng);
-       l_ubs.fill_randu(rng);
 
        ta_ubs *= (natows+1);
        tl_ubs *= (nltows+1);
@@ -226,7 +236,7 @@ DATA_SECTION
      // if (!nsims)exit(1); // logic for if simulation
      // for (int i=1;i<=10000;i++) cout <<a_ubs(i)<<" "<<adata(a_ubs(i))<<endl;cout<<max(a_ubs)<<" "<<na_rcrds<<endl;exit(1);
 
-    // Step 1,ample among tows, count total records for 
+    // Step 1, sample among tows, count total records for lengths and ages
     int k=1;
     int ii ;
     if(do_check) cout<<"Number of age-tows "<<natows<<endl;
@@ -242,7 +252,7 @@ DATA_SECTION
         adata(k) = adata_in(a_recnum(ii,j));
         k++;
       }
-    }
+    } // Loop over age tows
     // cout << adata_in<<endl;exit(1);
     int n_bsa_rcrds = k-1;
     // for (i=1;i<=n_bsa_rcrds;i++) 
@@ -272,7 +282,7 @@ DATA_SECTION
         }
         k++;
       }
-    }
+    } // Loop over length tows
     if(do_check) cout<<"Done next bootstrap part"<<endl; 
     int n_bsl_rcrds = ik-1;
     if (nsims) 
@@ -287,6 +297,7 @@ DATA_SECTION
         ii=int(a_ubs(i));
       else
         ii=1;
+      if (TowsOnly) ii=i;
       age   = int(adata(ii,9));
       len   = int(adata(ii,13));
       sex   = int(adata(ii,10));
@@ -313,9 +324,9 @@ DATA_SECTION
         }
         if (age>=a1) 
         {
-          if (age>a2) age=a2; // Plus group
+          if (age>a2) age=a2; // Put in plus group
           galk(len,age)++;
-          if (sex==3)
+          if (sex==3) // Split unsexed fish into sex-spp ALK and global
           {
             salk(1,len,age)+=0.5;
             salk(2,len,age)+=0.5;
@@ -335,17 +346,18 @@ DATA_SECTION
     for (i=1;i<=n_bsl_rcrds;i++)
     {
       if (l_ubs(i)>1)
-        ii=int(l_ubs(i));
+        ii=int(l_ubs(i)); // Draw from length subsample
       else
         ii=1;
+      if (TowsOnly) ii=i;
       double frq   = ldata(ii,5);
-      len   = ldata(ii,4);
-      sex   = ldata(ii,3);
+      len          = ldata(ii,4);
+      sex          = ldata(ii,3);
       if (sex==0) sex=3;
-      strat = ldata(ii,1);
+      strat        = ldata(ii,1);
       if (strat > nstrata) {cout<<"length data strata too high "<<i<<endl<<ldata(i)<<endl;exit(1);}
-      if (len<l1) len=l1;
-      if (len>l2) len=l2;
+      if (len<l1) len=l1; // Sum into minus bin
+      if (len>l2) len=l2; // Sum into plus bin
       // if (len>=l1 && len<=l2) // Changed to accumulate below and above l1 and l2 sizes
       if (strat<1){ cout<<ii<<" "<<ldata(ii)<<endl;exit(1);}
         lf(strat,sex,len)+=frq;
@@ -439,7 +451,7 @@ DATA_SECTION
   /*
   */
 
-          if (!nsims)  // Don't print out length frequency for bootstraps...
+          // if (!nsims)  // Don't print out length frequency for bootstraps...
           {
             // lf_out <<isim<<" "<< year<<" "<<k<<" "<<i<<" "<<j<<" "<<lf(k,i,j)<<" "<< plf(k,i,j)<< endl;// " "<< awtl(k,i,j)<<" "<<cwtl(k,i,j)<<" "<<nlf(k,i,j)<<" "<<naged(k,i,j)<<endl;
             lf_out <<isim<<" "<< year<<" "<<k<<" "<<i<<" "<<j<<" "<<lf(k,i,j)<<" "<< plf(k,i,j)<<" "<< awtl(k,i,j)<<" "<<cwtl(k,i,j)<<" "<<nlf(k,i,j)<<" "<<naged(k,i,j)<<endl;
@@ -532,19 +544,13 @@ DATA_SECTION
     // write out so data file can use directly...
     for (int k=1;k<=nstrata;k++)
     {
-      catage_out_str <<isim<<" "<<
-      sam_level_1<<"_"<<sam_level_2<<"_"<<sam_level_3
-      <<" "<<year<<" "<<k<<" "<<nat_tmp3(k)<< endl;
-      wtage_out_str  <<isim<<" "<<
-      sam_level_1<<"_"<<sam_level_2<<"_"<<sam_level_3
-      <<" "<<year<<" "<<k<<" "<<awt_tmp3(k)<< endl;
+      catage_out_str <<isim<<" "<< sam_level_1<<"_"<<sam_level_2<<"_"<<sam_level_3 <<" "<<year<<" "<<k<<" "<<nat_tmp3(k)<< endl;
+      wtage_out_str  <<isim<<" "<< sam_level_1<<"_"<<sam_level_2<<"_"<<sam_level_3 <<" "<<year<<" "<<k<<" "<<awt_tmp3(k)<< endl;
     }
-    catage_out <<isim<<" "<<
-      sam_level_1<<"_"<<sam_level_2<<"_"<<sam_level_3
-    <<" "<<year<<" "<<nat_tmp1<< endl;
-    wtage_out  <<isim<<" "<<
-      sam_level_1<<"_"<<sam_level_2<<"_"<<sam_level_3
-    <<" "<<year<<" "<<awt_tmp1<< endl;
+    catage_out    <<isim<<" "<< sam_level_1<<"_"<<sam_level_2<<"_"<<sam_level_3 <<" "<<year<<" "<<nat_tmp1<< endl;
+    catage_out_str <<isim<<" "<< sam_level_1<<"_"<<sam_level_2<<"_"<<sam_level_3 <<" "<<year<<" "<<"999"<<" "<<nat_tmp1<< endl;
+    wtage_out     <<isim<<" "<< sam_level_1<<"_"<<sam_level_2<<"_"<<sam_level_3 <<" "<<year<<" "<<awt_tmp1<< endl;
+    wtage_out_str <<isim<<" "<< sam_level_1<<"_"<<sam_level_2<<"_"<<sam_level_3 <<" "<<year<<" "<<"999"<<" "<<awt_tmp1<< endl;
 
     if (!nsims)
     for (j=l1;j<=l2;j++)
