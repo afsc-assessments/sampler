@@ -23,7 +23,7 @@ Sampler <- function(yr=2014,do_all=TRUE,est=TRUE,maxlen=80,io=FALSE){
     ldf       <- Get_LF(yr)
     adf       <- Get_Age(yr)
     #names(ldf)
-    #glimpse(ldf)
+    #glimpse(cd)
     lout <- ldf %>% transmute(strata,haul,sex,len,freq)
     write.table(lout,lout_file,quote=F,row.names=F,col.names=F)
     # old format:
@@ -47,6 +47,7 @@ Sampler <- function(yr=2014,do_all=TRUE,est=TRUE,maxlen=80,io=FALSE){
         catch=Catch
         )  %>% select(strata, catch) %>%
       group_by(strata) %>% summarise(catch=sum(catch))
+      #sum(catch)
     catch <- cdf$catch
     #catch[1] <-  #Catch in stratum 1, A season all areas
     #catch[2] <-  #Catch in stratum 2, B season areas 520 and higher (NW)
@@ -129,25 +130,27 @@ Write_LF <- function(LF.df, yr){
 }
 Get_Age <- function(yr)
 {
-    ad <- read.csv(paste("imported/age",yr,".csv",sep=""),as.is=T,header=F)
+   # ad <- read_csv2(paste("imported/age",yr,".csv",sep=""),col_names=F)
+    ad <- read.csv(paste("imported/age",yr,".csv",sep="") ,as.is=T,header=F)
     hdr_age <- read.csv("imported/hdr_age.csv",as.is=T,header=F)
     names(ad) <- hdr_age
+    ad$HAUL_OFFLOAD_DATE <-   dmy(ad$HAUL_OFFLOAD_DATE)
     #----------------------------------
     # Age data massage names(ad) ;dim(ad)
     # Need to filter for sample type
     # Strata definitions 1, 2, 3 are A-season, B_NW, B_SE
     #distinct(SPECIMEN_NUMBER) %>%
-    names(ad)
     #adf <- ad %>% dplyr::filter(NMFS_AREA>500) %>%
     adf <- ad %>% dplyr::filter(NMFS_AREA<540) %>%
       dplyr::transmute(
+        #haul   = ifelse((HAUL_JOIN==""),PORT_JOIN,HAUL_JOIN),
         haul   = ifelse(is.na(HAUL_JOIN),PORT_JOIN,HAUL_JOIN),
         haul = as.integer(as.factor(haul)),
-        month  = month(parse_date_time(HAUL_OFFLOAD_DATE,orders="dmy")),
+        month  = month(HAUL_OFFLOAD_DATE),
         seas   = ifelse(month>5, 2, 1), 
         strata = ifelse(seas==1, 1, ifelse(NMFS_AREA>519, 2, 3)), 
         sex = ifelse(SEX=="F",1,2) ,
-        len    = LNGTH , age = ifelse(AGE==0,-9,AGE) ,
-        wt = ifelse(is.na(WEIGHT) | WEIGHT==0,-9,WEIGHT) ) #, age = AGE ) 
+        len    = LNGTH , age = ifelse(AGE==0,-9,AGE),
+        wt = ifelse(is.na(WEIGHT) | WEIGHT==0,-9,WEIGHT) , age=ifelse(is.na(age),-9,age ) )
       return(adf)
  }   
