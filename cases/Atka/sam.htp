@@ -1,0 +1,120 @@
+#if !defined(_sam_)
+#  define _sam_
+
+class model_data : public ad_comm{
+  int do_check;
+  random_number_generator *   pad_rng;
+  data_int na_rcrds;
+  data_int nl_rcrds;
+  data_int a1;
+  data_int a2;
+  int na;
+  data_int l1;
+  data_int l2;
+  int nl;
+  data_int nstrata;
+  data_vector strata_catch;
+  data_int nsims;
+  data_number sam_level_1;
+  data_number sam_level_2;
+  data_number sam_level_3;
+  data_matrix adata_in;
+  int natows;
+  int nltows;
+  dvector a_tows;
+  dvector l_tows;
+  ivector na_sam_tow;
+  int nsam_max;
+  dmatrix a_recnum;
+  int lenpad_bs;
+  int agepad_bs;
+  dmatrix adata;
+  dmatrix ldata;
+  dvector ta_ubs;
+  dvector a_ubs;
+  dvector l_ubs;
+  data_matrix ldata_in;
+  dvector nlfrq_sam_tow;
+  dvector nfshl_sam_tow;
+  dvector tl_ubs;
+  dmatrix l_recnum;
+  dmatrix awt;
+  d3_array awtl;
+  dmatrix sawtl;
+  dvector gawtl;
+  dmatrix cwt;
+  d3_array cwtl;
+  dmatrix scwtl;
+  dvector gcwtl;
+  d3_array awta;
+  d3_array lf;
+  d3_array nlf;
+  d3_array plf;
+  d4_array alk;
+  d3_array naged;
+  d3_array salk;
+  dmatrix galk;
+  d3_array page;
+  d3_array nage;
+  d3_array plen;
+  double wt_tmp;
+  int age;
+  int len;
+  int sex;
+  int strat;
+  int i;
+  int j;
+  ~model_data();
+  model_data(int argc,char * argv[]);
+  friend class model_parameters;
+};
+
+class model_parameters : public model_data ,
+  public function_minimizer
+{
+public:
+  ~model_parameters();
+  void preliminary_calculations(void);
+  void set_runtime(void);
+  virtual void * mycast(void) {return (void*)this;}
+  static int mc_phase(void)
+  {
+    return initial_params::mc_phase;
+  }
+  static int mceval_phase(void)
+  {
+    return initial_params::mceval_phase;
+  }
+  static int sd_phase(void)
+  {
+    return initial_params::sd_phase;
+  }
+  static int current_phase(void)
+  {
+    return initial_params::current_phase;
+  }
+  static int last_phase(void)
+  {
+    return (initial_params::current_phase
+      >=initial_params::max_number_phases);
+  }
+  static prevariable current_feval(void)
+  {
+    return *objective_function_value::pobjfun;
+  }
+private:
+  ivector integer_control_flags;
+  dvector double_control_flags;
+  param_init_number x;
+  param_number prior_function_value;
+  param_number likelihood_function_value;
+  objective_function_value obj_fun;
+public:
+  virtual void userfunction(void);
+  virtual void report(const dvector& gradients);
+  virtual void final_calcs(void);
+  model_parameters(int sz,int argc, char * argv[]);
+  virtual void initializationfunction(void){}
+
+};
+#endif
