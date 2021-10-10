@@ -1,0 +1,5 @@
+# Setup file for bootstrapping age and length data
+# set to zero for standard sampler-like performance     
+ 1
+# Sampling level relative to baseline (0.5 = half, 0.10 equal one tenth etc
+  1. # 1 = sampling level same as baseline
