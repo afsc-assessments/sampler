@@ -14,7 +14,7 @@ Sampler <- function(yr=2014,do_all=TRUE,est=TRUE,maxlen=80,io=FALSE){
   ctl_file  <- paste0("data/sam_",yr,".dat")
   if (do_all)
   {
-    cd <- read.csv(paste("imported/catch",yr,".csv",sep=""),as.is=T,header=T)
+    cd <- read_csv(paste("imported/catch",yr,".csv",sep=""),max_guess=10000)
     # hdr_cat <- read.csv("imported/hdr_cat_short.csv",as.is=T,header=F)
     # names(cd) <- hdr_cat
     aout_file <- paste("data/age",yr,".dat",sep="")
@@ -91,7 +91,8 @@ Get_LF <- function(yr){
   # Strata definitions 1, 2, 3 are A-season, B_NW, B_SE
   #ldf <- ld %>% filter(SPECIES_CODE == 202,NMFS_AREA<540)  %>%
   #ldf <- ld %>% filter(NMFS_AREA<540)  %>%
-  ld <- read.csv(paste0("imported/len",yr,".csv"),as.is=T,header=F)
+  #ld <- read.csv(paste0("imported/len",yr,".csv"),as.is=T,header=F)
+  ld <- read_csv(paste0("imported/len",yr,".csv"),guess_max=10000)
   hdr_len <- read.csv("imported/hdr_len.csv",as.is=T,header=F)
   names(ld) <- hdr_len
   #ldf <- ld %>% filter(NMFS_AREA>500)  %>%
@@ -128,20 +129,21 @@ Write_LF <- function(LF.df, yr){
       )
       return(ldf)
 }
-Get_Age <- function(yr)
-{
+Get_Age <- function(yr,ad=adt) {
    # ad <- read_csv2(paste("imported/age",yr,".csv",sep=""),col_names=F)
-    ad <- read.csv(paste("imported/age",yr,".csv",sep="") ,as.is=T,header=F)
-    hdr_age <- read.csv("imported/hdr_age.csv",as.is=T,header=F)
-    names(ad) <- hdr_age
-    ad$HAUL_OFFLOAD_DATE <-   dmy(ad$HAUL_OFFLOAD_DATE)
+    #ad <- read.csv(paste("imported/age",yr,".csv",sep="") ,as.is=T,header=F)
+    #ad <- read_csv(paste0("imported/age",yr,".csv"),guess_max=10000)
+    #names(ad) 
+    #hdr_age <- read.csv("imported/hdr_age.csv",as.is=T,header=F)
+    #names(ad) <- hdr_age
+    #adt$HAUL_OFFLOAD_DATE <-   dmy(adt$HAUL_OFFLOAD_DATE)
     #----------------------------------
     # Age data massage names(ad) ;dim(ad)
     # Need to filter for sample type
     # Strata definitions 1, 2, 3 are A-season, B_NW, B_SE
     #distinct(SPECIMEN_NUMBER) %>%
     #adf <- ad %>% dplyr::filter(NMFS_AREA>500) %>%
-    adf <- ad %>% dplyr::filter(NMFS_AREA<540) %>%
+    adf <- ad %>% dplyr::filter(YEAR==yr,NMFS_AREA<540) %>%
       dplyr::transmute(
         #haul   = ifelse((HAUL_JOIN==""),PORT_JOIN,HAUL_JOIN),
         haul   = ifelse(is.na(HAUL_JOIN),PORT_JOIN,HAUL_JOIN),
