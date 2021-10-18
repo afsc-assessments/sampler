@@ -21,6 +21,7 @@ DATA_SECTION
   !! *(ad_comm::global_datafile) >>  year; 
   !! *(ad_comm::global_datafile) >>  agefile; 
   !! *(ad_comm::global_datafile) >>  lenfile; 
+  !!cout<<"read files"<<endl;
   init_int na_rcrds
   init_int nl_rcrds
   init_int a1
@@ -32,42 +33,48 @@ DATA_SECTION
   init_int l1
   init_int l2
   int nl 
-  !! nl=l2-l1+1;
+  !! nl=l2-l1+1;    
+  !!cout<<"check2"<<endl; 
   init_int nstrata
-  init_vector strata_catch(1,nstrata)  // sample this?
+  init_vector strata_catch(1,nstrata)  // sample this? 
+  !!cout<<"check3"<<endl;
   !! *(ad_comm::global_datafile) >>  outfile; 
   !! cout <<"Writing to " <<outfile<< endl;
   !! if(do_check) cout <<"Nstrata : "<< nstrata<<endl<<strata_catch<<endl<<nl_rcrds<<endl;
   !! if(do_check) cout <<agefile<<endl<<lenfile<<endl<<nl_rcrds<<endl;
-
-  !! ad_comm::change_datafile_name("bs_setup.dat");
+    !!cout<<"check4"<<endl; 
+  !! ad_comm::change_datafile_name("bs_setup.dat"); 
+    !!cout<<"check5"<<endl;  
   init_int nsims;
   !! if (nsims==0) nsims=1;
   // Sampling level relative to baseline (2 = half, 10 equal one tenth etc
   init_number sam_level_1; 
   init_number sam_level_2; 
   init_number sam_level_3; 
-
+      !!cout<<"check6"<<endl; 
   !! ad_comm::change_datafile_name(agefile);
   !! if(do_check) cout<<"Sampling levels: "<<endl<<sam_level_1<<endl<<sam_level_2<<endl<<sam_level_3<<endl<<"Number of age records:  "<< na_rcrds <<endl;
   !! if(do_check) cout<<"Reading age data..."<<endl;
-  init_matrix adata_in(1,na_rcrds,1,16)
+  init_matrix adata_in(1,na_rcrds,1,16)    
+  !!cout<<"check7"<<endl;
   int natows
   int nltows
   vector a_tows(1,na_rcrds)       // Vector of tows with age data length na_rcrds
-  vector l_tows(1,nl_rcrds)       // Vector of tows with age data length na_rcrds
+  vector l_tows(1,nl_rcrds)       // Vector of tows with age data length na_rcrds   
   // vector a_recnum(1,na_rcrds+100) // Vector of rec numbers with age data length na_rcrds+100
-  !! a_tows=column(adata_in,16);
+  !! a_tows=column(adata_in,16);     
   !! natows = max(a_tows);
-  ivector na_sam_tow(1,natows);
-  !! if(do_check) cout<<"Number of age tows: "<<natows<<endl;
-  !! na_sam_tow.initialize();
-  !! for (i=1;i<=na_rcrds;i++) na_sam_tow(a_tows(i))++; 
-  int nsam_max
+  ivector na_sam_tow(1,natows);     
+  !! if(do_check) cout<<"Number of age tows: "<<natows<<endl;  
+  !!cout<<"na_rcrds"<<na_rcrds<<endl; 
+  !!cout<<"a_tows"<<a_tows<<endl; 
+  !! na_sam_tow.initialize();      
+  !! for (i=1;i<=na_rcrds;i++) na_sam_tow(a_tows(i))++;   
+  int nsam_max   
   !! nsam_max=max(na_sam_tow);
   matrix a_recnum(1,natows,1,nsam_max)
   int lenpad_bs;
-  int agepad_bs;
+  int agepad_bs;   
  LOCAL_CALCS
   a_recnum.initialize();
   int k=1;
