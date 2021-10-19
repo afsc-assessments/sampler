@@ -9,12 +9,18 @@
 #' @author J Ianelli
 #' @export
 #' 
+#' 
+age_file=read.csv("/Users/ingridspies/Documents/WorkDellStuff/Assessments/YFS/2021/norpac_age_report_YFS_10_5_21.csv")
+length_file=read.csv("/Users/ingridspies/Documents/WorkDellStuff/Assessments/YFS/2021/norpac_length_report_YFS_10_6_21.csv")
+
 #' setwd()
+#' 
 Sampler <- function(yr=2014,do_all=TRUE,est=TRUE,maxlen=55,io=FALSE){
   ctl_file  <- paste0("data/sam_",yr,".dat")
   if (do_all)
   {
     cd <- read.csv(paste("imported/catch",yr,".csv",sep=""),as.is=T,header=T)
+    cd=read.csv("/Users/ingridspies/Documents/WorkDellStuff/Assessments/YFS/2021/GroundfishTotalCatchbyFishery_YFS_10_1_21_1991_2021.csv",header=TRUE)
     # hdr_cat <- read.csv("imported/hdr_cat_short.csv",as.is=T,header=F)
     # names(cd) <- hdr_cat
     aout_file <- paste("data/age",yr,".dat",sep="")
@@ -25,11 +31,11 @@ Sampler <- function(yr=2014,do_all=TRUE,est=TRUE,maxlen=55,io=FALSE){
     #names(ldf)
     #glimpse(cd)
     lout <- ldf %>% transmute(strata,haul,sex,len,freq)
-    write.table(lout,lout_file,quote=F,row.names=F,col.names=F)
+    write.table(lout,"/Users/ingridspies/Downloads/lout_table",quote=F,row.names=F,col.names=F)
     # old format:
     # aout <- adf %>% transmute(strata, area,cr=1,mm=1,dd=1,yy=yr,lat=55,lon=-165,age=ifelse(is.na(age),0,age),sex,spp=201,wt,len,x=1,y=1,haul) # New format:
      aout <- adf %>% transmute(strata, haul, sex, age, wt, len) 
-    write.table(aout,aout_file,quote=F,row.names=F,col.names=F)
+    write.table(aout,"/Users/ingridspies/Downloads/aout_table",quote=F,row.names=F,col.names=F)
   }
     #----------------------------------
     # Catch data massage names(ad) ;dim(ad)
@@ -37,13 +43,13 @@ Sampler <- function(yr=2014,do_all=TRUE,est=TRUE,maxlen=55,io=FALSE){
     lad <- dim(aout)[1]
     lld <- dim(lout)[1]
     nstrata <- 3
-    cdf <- cd %>% filter(FMP_Subarea=="BS",Year==yr) %>%
+    cdf <- cd %>% filter(FMP.Subarea=="BS",Year==yr) %>%
       transmute(
-        area=NMFS_Area,month=trunc(WED/100),
+        area=NMFS.Area,month=Month,
         # note that in 1998 no NMFS area available for some catch so going on month for stratum 1 (Aseason), 
         #  and 3 if not; simple trimester
         strata=ifelse(month<5,1,ifelse(month<9,2,3)), 
-        catch=Catch
+        catch=Catch..mt.
         )  %>% select(strata, catch) %>%
       group_by(strata) %>% summarise(catch=sum(catch))
       #sum(catch)
@@ -84,13 +90,35 @@ SetBS <- function(n=1,sam_int=c(1,1,1,1)){
      )
   }
 
-Get_LF <- function(yr){
+
+library(lubridate)
+Get_LF_IS <- function(yr){
+
+  
+  
+#Make a length frequency file from norpac lenghts for the year you want.  
+  length_file=length_file[which(length_file$Year==2014),]
+  #ldf <- ld %>% filter(NMFS_AREA>500)  %>%
+  ldf <- length_file %>% filter(length_file$NMFS.Area<540)  %>%
+    transmute(
+      haul = ifelse(is.na(length_file$Haul.Join),length_file$Port.Join,length_file$Haul.Join),            # Data come from at-sea or port
+      month = month(parse_date_time(length_file$Haul.Offload.Date,orders="dmy")), # get month on fly
+      seas = ifelse(month>5, 2, 1),                                   # Season 2 is B, uses month
+      strata=ifelse(month<5,1,ifelse(month<9,2,3)), 
+      # strata = ifelse(seas==1, 1, ifelse(NMFS_AREA>519 , 2, 3)),      # Strata >519 one, < another
+      len = length_file$Length..cm., sex = ifelse(length_file$Sex=="F",1,2), freq = length_file$Frequency,     # recodes sex etc
+      haul = as.integer(as.factor(haul))                              # Sets hauls/offloads to unique integer values
+    )
+
+  
+  
+Get_LF <- function(yr,age_file){#norpac age data
   #----------------------------------
   # Create Length data
   # Strata definitions 1, 2, 3 are A-season, B_NW, B_SE
   #ldf <- ld %>% filter(SPECIES_CODE == 202,NMFS_AREA<540)  %>%
   #ldf <- ld %>% filter(NMFS_AREA<540)  %>%
-  ld <- read.csv(paste0("imported/len",yr,".csv"),as.is=T,header=F)
+  age_file <- read.csv(paste0("imported/len",yr,".csv"),as.is=T,header=F)
   hdr_len <- read.csv("imported/hdr_len.csv",as.is=T,header=F)
   names(ld) <- hdr_len
   #ldf <- ld %>% filter(NMFS_AREA>500)  %>%
@@ -106,7 +134,6 @@ Get_LF <- function(yr){
     )
   return(ldf)
 }
-
 Write_LF <- function(LF.df, yr){
     #----------------------------------
     # Write Length data
@@ -129,6 +156,40 @@ Write_LF <- function(LF.df, yr){
       )
       return(ldf)
 }
+
+
+
+Get_Age_IS <- function(yr)
+{
+  # ad <- read_csv2(paste("imported/age",yr,".csv",sep=""),col_names=F)
+  ad <- read.csv(paste("imported/age",yr,".csv",sep="") ,as.is=T,header=F)
+  hdr_age <- read.csv("imported/hdr_age.csv",as.is=T,header=F)
+  names(ad) <- hdr_age
+  age_file=age_file[which(age_file$Year==2014),]
+  age_file$Haul.Offload.Date <-   dmy(age_file$Haul.Offload.Date)
+  #----------------------------------
+  # Age data massage names(ad) ;dim(ad)
+  # Need to filter for sample type
+  # Strata definitions 1, 2, 3 are A-season, B_NW, B_SE
+  #distinct(SPECIMEN_NUMBER) %>%
+  #adf <- ad %>% dplyr::filter(NMFS_AREA>500) %>%
+  adf <- age_file %>% dplyr::filter(age_file$NMFS.Area<540) %>%
+    dplyr::transmute(
+      #haul   = ifelse((HAUL_JOIN==""),PORT_JOIN,HAUL_JOIN),
+      haul   = ifelse(is.na(age_file$Haul.Join),age_file$Port.Join,age_file$Haul.Join),
+      haul = as.integer(as.factor(haul)),
+      month  = month(age_file$Haul.Offload.Date),
+      seas   = ifelse(month>5, 2, 1), 
+      strata=ifelse(month<5,1,ifelse(month<9,2,3)), 
+      #strata = ifelse(seas==1, 1, ifelse(NMFS_AREA>519, 2, 3)), 
+      sex = ifelse(age_file$Sex=="F",1,2) ,
+      len    = age_file$Length..cm , age = ifelse(age_file$Age==0,-9,age_file$Age),
+      wt = ifelse(is.na(age_file$Weight..kg.) | age_file$Weight..kg.==0,-9,age_file$Weight..kg.) , age=ifelse(is.na(age_file$Age),-9,age_file$Age ) )
+  return(adf)
+}   
+
+
+
 Get_Age <- function(yr)
 {
    # ad <- read_csv2(paste("imported/age",yr,".csv",sep=""),col_names=F)
