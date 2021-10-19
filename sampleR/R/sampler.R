@@ -10,20 +10,41 @@
 #' @export
 #' 
 #' setwd()
+#yr=2014;do_all=TRUE;est=TRUE;maxlen=80;io=FALSE
 Sampler <- function(yr=2014,do_all=TRUE,est=TRUE,maxlen=80,io=FALSE){
   ctl_file  <- paste0("data/sam_",yr,".dat")
   if (do_all)
   {
-    cd <- read.csv(paste("imported/catch",yr,".csv",sep=""),as.is=T,header=T)
+    #cd <- read.csv(paste("imported/catch",yr,".csv",sep=""),as.is=T,header=T)
     # hdr_cat <- read.csv("imported/hdr_cat_short.csv",as.is=T,header=F)
     # names(cd) <- hdr_cat
     aout_file <- paste("data/age",yr,".dat",sep="")
     lout_file <- paste("data/len",yr,".dat",sep="")
     # Length data massage
-    ldf       <- Get_LF(yr)
-    adf       <- Get_Age(yr)
-    #names(ldf)
-    #glimpse(cd)
+    ldf <- ldt %>% filter(NMFS_AREA<540,YEAR==yr)  %>%
+      transmute(
+      haul = ifelse(is.na(HAUL_JOIN),PORT_JOIN,HAUL_JOIN),            # Data come from at-sea or port
+      month = month(parse_date_time(HAUL_OFFLOAD_DATE,orders="dmy")), # get month on fly
+      seas = ifelse(month>5, 2, 1),                                   # Season 2 is B, uses month
+      strata = ifelse(seas==1, 1, ifelse(NMFS_AREA>519 , 2, 3)),      # Strata >519 one, < another
+      len = LENGTH, sex = ifelse(SEX=="F",1,2), freq = FREQUENCY,     # recodes sex etc
+      haul = as.integer(as.factor(haul))                              # Sets hauls/offloads to unique integer values
+    )
+    adf <- adt %>% filter(YEAR==yr,NMFS_AREA<540) %>%
+      transmute(
+        #haul   = ifelse((HAUL_JOIN==""),PORT_JOIN,HAUL_JOIN),
+        haul   = ifelse(is.na(HAUL_JOIN),PORT_JOIN,HAUL_JOIN),
+        haul = as.integer(as.factor(haul)),
+        month  = month(HAUL_OFFLOAD_DATE),
+        seas   = ifelse(month>5, 2, 1), 
+        strata = ifelse(seas==1, 1, ifelse(NMFS_AREA>519, 2, 3)), 
+        sex = ifelse(SEX=="F",1,2) ,
+        len    = LNGTH , age = ifelse(AGE==0,-9,AGE),
+        wt = ifelse(is.na(WEIGHT) | WEIGHT==0,-9,WEIGHT) , age=ifelse(is.na(age),-9,age ) )
+    #ldf       <- Get_LF(yr)
+    #adf       <- Get_Age(yr)
+    names(ldf)
+    glimpse(adf)
     lout <- ldf %>% transmute(strata,haul,sex,len,freq)
     write.table(lout,lout_file,quote=F,row.names=F,col.names=F)
     # old format:
@@ -131,7 +152,7 @@ Write_LF <- function(LF.df, yr){
 Get_Age <- function(yr)
 {
    # ad <- read_csv2(paste("imported/age",yr,".csv",sep=""),col_names=F)
-    ad <- read.csv(paste("imported/age",yr,".csv",sep="") ,as.is=T,header=F)
+    ad <- read_csv(paste("imported/age",yr,".csv",sep="") ,as.is=T,header=F)
     hdr_age <- read.csv("imported/hdr_age.csv",as.is=T,header=F)
     names(ad) <- hdr_age
     ad$HAUL_OFFLOAD_DATE <-   dmy(ad$HAUL_OFFLOAD_DATE)
