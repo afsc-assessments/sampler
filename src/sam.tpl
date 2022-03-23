@@ -173,8 +173,10 @@ DATA_SECTION
   int also_write;
  LOCAL_CALCS
    ofstream ac_out(outfile);
+   ofstream sex_catage_out("results/sex_catage"+year+".rep");
    ofstream catage_out("results/catage"+year+".rep");
    ofstream catage_out_str("results/str_catage"+year+".rep");
+   ofstream sex_wtage_out("results/sex_wtage"+year+".rep");
    ofstream  wtage_out("results/wtage"+year+".rep");
    ofstream  wtage_out_str("results/str_wtage"+year+".rep");
    ofstream lf_out("results/LF_"+year+".rep");
@@ -555,8 +557,21 @@ DATA_SECTION
       catage_out_str <<ibs<<" "<< sam_level_age_tows<<"_"<<sam_level_ages<<"_"<<sam_level_lf_tows<<"_"<<sam_level_lfreqs<<" "<<year<<" "<<k<<" "<<nat_tmp3(k)<< endl;
       wtage_out_str  <<ibs<<" "<< sam_level_age_tows<<"_"<<sam_level_ages<<"_"<<sam_level_lf_tows<<"_"<<sam_level_lfreqs<<" "<<year<<" "<<k<<" "<<awt_tmp3(k)<< endl;
     }
-    catage_out       <<ibs<<" "<<sam_level_age_tows<<"_"<<sam_level_ages<<"_"<<sam_level_lf_tows<<"_"<<sam_level_lfreqs<<"  "<<year<<" "<<nat_tmp1<< endl;
-    
+    catage_out       <<ibs<<" "<<
+		                   sam_level_age_tows<<"_"<<sam_level_ages<<"_"<<sam_level_lf_tows<<"_"<<sam_level_lfreqs<<" "<<
+											 year<<" "<<
+											 nat_tmp1<< endl;
+    for (i=1;i<=2;i++)
+		{
+      sex_catage_out   <<ibs<<" "<<sam_level_age_tows<<"_"<<sam_level_ages<<"_"<<sam_level_lf_tows<<"_"<<sam_level_lfreqs<<"  "<<
+		                 year<<" "<<
+										 i   <<" "<<
+										 nat_tmp2(i)<< endl;
+      sex_wtage_out    <<ibs<<" "<< sam_level_age_tows<<"_"<<sam_level_ages<<"_"<<sam_level_lf_tows<<"_"<<sam_level_lfreqs<<" "<<
+		                 year<<" "<<
+										 i   <<" "<<
+										 awt_tmp2(i)<< endl;
+    }  
     wtage_out        <<ibs<<" "<< sam_level_age_tows<<"_"<<sam_level_ages<<"_"<<sam_level_lf_tows<<"_"<<sam_level_lfreqs<<" "<<year<<" "<<awt_tmp1<< endl;
     wtage_out_str    <<ibs<<" "<< sam_level_age_tows<<"_"<<sam_level_ages<<"_"<<sam_level_lf_tows<<"_"<<sam_level_lfreqs<<" "<<year<<" "<<"999"<<" "<<awt_tmp1<< endl;
 
