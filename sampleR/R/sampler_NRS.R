@@ -61,9 +61,9 @@ Sampler_NRS <- function(yr=2014,do_all=TRUE,est=TRUE,maxlen=55,io=FALSE){
     # run sampler from commandline
     if (est) {
         if (io)
-          system(paste0("./sam -nox -io -ind  ",ctl_file))
+          system(paste0("../../src/sam -nox -io -ind  ",ctl_file))
         else
-          system(paste0("./sam -ind  ",ctl_file))
+          system(paste0("../../src/sam -ind  ",ctl_file))
     }
 }
 

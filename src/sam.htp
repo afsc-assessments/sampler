@@ -1,5 +1,5 @@
-#if !defined(_sam_)
-#  define _sam_
+#if !defined(_SAM_)
+#  define _SAM_
 
 class model_data : public ad_comm{
   int do_check;
@@ -80,6 +80,7 @@ public:
   ~model_parameters();
   void preliminary_calculations(void);
   void set_runtime(void);
+  virtual void * mycast(void) {return (void*)this;}
   static int mc_phase(void)
   {
     return initial_params::mc_phase;
@@ -87,10 +88,6 @@ public:
   static int mceval_phase(void)
   {
     return initial_params::mceval_phase;
-  }
-  static int hessian_phase(void)
-  {
-    return initial_params::in_hessian_phase;
   }
   static int sd_phase(void)
   {
@@ -110,12 +107,6 @@ public:
     return *objective_function_value::pobjfun;
   }
 private:
-  dvariable adromb(dvariable(model_parameters::*f)(const dvariable&), double a, double b, int ns)
-  {
-    using namespace std::placeholders;
-    _func func = std::bind(f, this, _1);
-    return function_minimizer::adromb(func, a, b, ns);
-  }
   ivector integer_control_flags;
   dvector double_control_flags;
   param_init_number x;
