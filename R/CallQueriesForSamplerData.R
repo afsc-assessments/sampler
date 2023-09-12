@@ -1,7 +1,4 @@
-#Call queries for sampler program and write data for sampler, possibly run sampler (?)
-#-------------------------------
-#CAUTION: RSOL and BSAI are HARD WIRED IN TO THE QUERY RIGHT NOW FOR CATCH BIOMASS! FIX THAT LATER!
-#-------------------------------
+#Call queries for sampler program and write data for sampler
 
 library(RODBC)
 library(dplyr)
