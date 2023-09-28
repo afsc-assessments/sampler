@@ -86,7 +86,7 @@ return(numrows)
 
 #need a data file that looks like this for each year, named "length1991.dat" etc., one for each year:
 #Suspected columns are:
-#strata haulno sex age length frequency
+#strata haulno sex length frequency
 # 2 2257 2 98 2
 # 2 2218 2 97 1
 # 2 5133 2 69 4

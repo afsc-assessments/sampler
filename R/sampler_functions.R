@@ -386,3 +386,6 @@ SamDat<-function(AKFIN,outdir,CatchFmpArea="'BSAI'",CatchSpeciesCode="'RSOL'",mi
  }
 }
 
+#Pull the length comps by area
+
+#Pull the survey specimen data

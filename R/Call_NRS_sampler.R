@@ -1,9 +1,7 @@
-library(RODBC)
-library(dplyr)
+#radian
+library(ggplot2)
 library(lubridate)
 library(tidyverse)
-library(keyring) # then set usernames and passwords using keyring
-library(ggplot2)
 library(data.table)
 library(xtable)
 library(ggthemes)
@@ -12,74 +10,18 @@ mytheme <- mytheme + theme(text=element_text(size=18)) + theme(axis.title.x=elem
 mytheme <- mytheme + theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank() )
 mytheme <- mytheme + theme( panel.background = element_rect(fill="white"), panel.border = element_rect(colour="black", fill=NA, size=.5))
 
-#Source other functions used:
-GitDir<-"C:/GitProjects/sampler/R/"
-#outdir<-"C:/Users/carey.mcgilliard/Work/SpatialGrowthAssessments/BSAI_NRS_sampler"
-outdir<-"C:/Users/carey.mcgilliard/Work/SpatialGrowthAssessments/GOA_Rex"
-source("C:/GitProjects/sampler/R/sampler_functions.R", echo=TRUE)
-
-#Connect to the database
-# keyring::key_set_with_value(service="afsc", username="WILLIAMSB", password = "my_secret_pwd")
-db <- "afsc"
-AFSC <- odbcConnect(db,keyring::key_list(db)$username,keyring::key_get(db, keyring::key_list(db)$username)) #mcgilliardc
-
-dbakfin<-"AKFIN"
-AKFIN<-odbcConnect(dbakfin,keyring::key_list(dbakfin)$username,keyring::key_get(dbakfin, keyring::key_list(dbakfin)$username)) #mcgilliardc
-
-FmpArea <- "500 and 544" #BSAI = "500 and 544" ; GOA = 
-SpeciesCode<-"(104,120)" #and also 120
-CatchSpeciesCode<-"'RSOL'"
-CatchFmpArea<-"'BSAI'"
-minage<-1
-maxage<-20
-minlen<-10
-maxlen<-55
-
-#Note: you can define strata based on other variables, just make a map like this that can be joined to the datasets by a variable that is in both.
-#YFS StrataMap (strata are times of year here, but can also be NMFS_AREA or other)
-StrataMap<-data.frame(STRATA =c(1,1,1,1,2,2,2,2,3,3,3,3),
-                      MONTH = seq(from = 1,to = 12,by = 1)) #YFS: 3 strata over the months of the year
-
-#NRS StrataMap (only one strata for BSAI NRS right now)
-#StrataMap<-data.frame(STRATA =rep(1,n = 12),
-#                      MONTH = seq(from = 1,to = 12,by = 1)) #NRS: 1 strata
-
-#stuff from call_sampler - make adjustments later
-#yrvec<-c(1992,1995,1999,2003,2005,2007,2009,2010,2012,2014,2015,2016,2017,2018,2019,2020)
+minage =1
+maxage = 20
+outdir<-"C:/Users/carey.mcgilliard/Work/SpatialGrowthAssessments/BSAI_NRS_sampler"
 setwd(outdir)
-
 #source("C:/GitProjects/BSAI_NRS/R/sampler_NRS_functions.R", echo=TRUE)
-SetBS(n=2) #set n = 1 if doing no bootstraps, this writes out an input file for number of bootstraps (bs_setup.dat)
+#source("C:/GitProjects/sampler/R/sampler_functions.R", echo=TRUE)
+SetBS(n=1000) #set n = 1 if doing no bootstraps, this writes out an input file for number of bootstraps (bs_setup.dat)
 est = TRUE
 io = TRUE
 
-
-#Write the age data
-ageinfo<-SamAge(AFSC=AFSC,outdir=outdir,FmpArea=FmpArea,SpeciesCode=SpeciesCode,StrataMap=StrataMap)
-nage<-ageinfo$nages
-years<-ageinfo$years
-yrvec<-years
-
-
-#Write the length data
-
-nlen<-SamLength(AFSC=AFSC,outdir=outdir,FmpArea=FmpArea,SpeciesCode=SpeciesCode,StrataMap=StrataMap,years=years)
-
-#Write the sam.dat files
-
-SamDat(AKFIN=AKFIN,outdir=outdir,CatchFmpArea=CatchFmpArea,CatchSpeciesCode=CatchSpeciesCode,
-       minage=minage,maxage=maxage,minlen=minlen,maxlen=maxlen,StrataMap=StrataMap,years=years,nage=nage,nlen=nlen)
-
-#Can set up sampler run now (functions in sampler_NRS.R and Jim's code for processing is NRS_sampler.R, bring these files into NRS directory.)
-
-
-
-#--------------------------------------------------------------
-#start where call_sampler used to start
-
-
 #Loop over years and run sam:
-for (y in yrvec) {
+for (y in 1991:1994) {
 ctl_file = paste0("sam",y,".dat")
 if (est) {
   if (io)
@@ -90,13 +32,23 @@ if (est) {
 }
 
 
+for (y in 1998:2022) {
+  ctl_file = paste0("sam",y,".dat")
+  if (est) {
+    if (io)
+      system(paste0("sam -nox -io -ind  ",ctl_file))
+    else
+      system(paste0("sam -ind  ",ctl_file))
+  }
+}
+
 # Sampler done running
 ##################
 
 #Read in datafiles from separate years and aggregate the info
 #--------------------------
 ctmp<-wtmp<-NULL
-for (i in yrvec) {
+for (i in c(1991:1994,1998:2022)) {
   print(i)
   wtmp <- rbind(wtmp,read_table(paste0("results/sex_wtage",i,".rep"),col_names=FALSE))
   ctmp <- rbind(ctmp,read_table(paste0("results/sex_catage",i,".rep"),col_names=FALSE))
