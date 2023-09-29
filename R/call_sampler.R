@@ -15,7 +15,7 @@ mytheme <- mytheme + theme( panel.background = element_rect(fill="white"), panel
 #Source other functions used:
 GitDir<-"C:/GitProjects/sampler/R/"
 #outdir<-"C:/Users/carey.mcgilliard/Work/SpatialGrowthAssessments/BSAI_NRS_sampler"
-outdir<-"C:/Users/carey.mcgilliard/Work/SpatialGrowthAssessments/GOA_Rex"
+outdir<-"C:/Users/carey.mcgilliard/Work/SpatialGrowthAssessments/GOA_rex_sampler"
 source("C:/GitProjects/sampler/R/sampler_functions.R", echo=TRUE)
 
 #Connect to the database
@@ -49,7 +49,7 @@ StrataMap<-data.frame(STRATA =c(1,1,1,1,2,2,2,2,3,3,3,3),
 setwd(outdir)
 
 #source("C:/GitProjects/BSAI_NRS/R/sampler_NRS_functions.R", echo=TRUE)
-SetBS(n=2) #set n = 1 if doing no bootstraps, this writes out an input file for number of bootstraps (bs_setup.dat)
+SetBS(n=1000) #set n = 1 if doing no bootstraps, this writes out an input file for number of bootstraps (bs_setup.dat)
 est = TRUE
 io = TRUE
 
