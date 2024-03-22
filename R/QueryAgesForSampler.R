@@ -63,6 +63,7 @@ AgeLength.df$MONTH<-month(as.Date(AgeLength.df$HAUL_OFFLOAD_DATE))
 AgeLength.df<-AgeLength.df %>% drop_na(LENGTH,WEIGHT)
 AgeLength.df<-AgeLength.df %>% mutate(SEXNO=ifelse(SEX=="F",1,2))
 AgeLength.df<-AgeLength.df %>% mutate(AGE=ifelse(is.na(AGE),-9,AGE))
+AgeLength.df<-AgeLength.df %>% mutate(COUNTAGES = ifelse(AGE==-9,0,1))
 
 #needs to be done within year.
 #AgeLength.df$MAKEHAUL<-ifelse(is.na(AgeLength.df$HAUL_JOIN),AgeLength.df$PORT_JOIN,AgeLength.df$HAUL_JOIN)            # Data come from at-sea or port
@@ -74,19 +75,23 @@ Ages.df<-full_join(AgeLength.df,StrataMap)
 save(Ages.df,file = file.path(outdir,"BigFisheryAges.Rdata"))
 
 years <-sort(unique(AgeLength.df$YEAR))
-numrows<-vector(mode="numeric",length=length(years))
+final_years<-vector("numeric",length = 1)
+numrows<-vector(mode="numeric",length=1)
 for (y in 1:length(years)) {
-  agedata<-Ages.df %>% filter(YEAR==years[y]) %>% select(HAUL_JOIN,PORT_JOIN,STRATA,SEXNO,AGE,WEIGHT,LENGTH)
-  agedata<-agedata %>% mutate(MAKEHAUL=ifelse(is.na(HAUL_JOIN),PORT_JOIN,HAUL_JOIN)  )
-  agedata<-agedata %>% mutate(HAULNO=as.integer(as.factor(MAKEHAUL))) %>% select(STRATA,HAULNO,SEXNO,AGE,WEIGHT,LENGTH)
-  write.table(agedata,file = file.path(outdir,paste0("age",years[y],".dat")),quote = FALSE,col.names = FALSE,row.names = FALSE)
-  write.table(nrow(agedata),file = file.path(outdir,paste0("nages",years[y],".dat")),quote = FALSE,col.names = FALSE,row.names = FALSE)
-  numrows[y]<-nrow(agedata)
+  agedata<-Ages.df %>% filter(YEAR==years[y]) %>% select(HAUL_JOIN,PORT_JOIN,STRATA,SEXNO,AGE,WEIGHT,LENGTH,COUNTAGES)
+  if (sum(agedata$COUNTAGES!=0)) {
+    agedata<-agedata %>% mutate(MAKEHAUL=ifelse(is.na(HAUL_JOIN),PORT_JOIN,HAUL_JOIN)  )
+    agedata<-agedata %>% mutate(HAULNO=as.integer(as.factor(MAKEHAUL))) %>% select(STRATA,HAULNO,SEXNO,AGE,WEIGHT,LENGTH)
+    write.table(agedata,file = file.path(outdir,paste0("age",years[y],".dat")),quote = FALSE,col.names = FALSE,row.names = FALSE)
+    write.table(nrow(agedata),file = file.path(outdir,paste0("nages",years[y],".dat")),quote = FALSE,col.names = FALSE,row.names = FALSE)
+    numrows<-append(numrows,nrow(agedata))
+    final_years<-append(final_years,years[y])
   }
+ }
 
 ageinfo<-list()
-ageinfo$years<-years
-ageinfo$nages<-numrows
+ageinfo$years<-final_years[2:length(final_years)]
+ageinfo$nages<-numrows[2:length(numrows)]
 return(ageinfo)
 }
 

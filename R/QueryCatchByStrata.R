@@ -46,6 +46,15 @@ NumStrata<-max(StrataMap$STRATA)
 # "WHERE council.comprehensive_blend_ca.species_group_code = 'RSOL'","\n ",
 # "AND council.comprehensive_blend_ca.fmp_area = 'BSAI'")
 
+
+
+
+
+
+
+#Attention:
+#You might also need the foreign catch data here.
+
 MyQuery<-paste0("SELECT council.comprehensive_blend_ca.week_end_date,\n ",
                 "council.comprehensive_blend_ca.catch_activity_date,\n ",
                 "council.comprehensive_blend_ca.reporting_area_code,\n ",
@@ -71,8 +80,8 @@ c.df<-catchbio %>% group_by(YEAR,STRATA) %>% summarise(cbio = sum(WEIGHT_POSTED)
 
 #years<-sort(unique(AgeLength.df$YEAR))
 for (y in 1:length(years)) {
-  c<-c.df%>% filter(YEAR==years[y])
-  myvec<-c$cbio
+  c_by_yr<-c.df%>% filter(YEAR==years[y])
+  myvec<-c_by_yr$cbio
   #write.table(myvec,file = file.path(outdir,paste0("catchbystrata",years[y],".dat")),quote=FALSE,row.names = FALSE,col.names = FALSE)
   #nage<-read.table(file.path(outdir,paste0("nages",years[y],".dat")))
   #nlen<-read.table(file.path(outdir,paste0("nlens",years[y],".dat")))
