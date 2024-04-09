@@ -9,7 +9,8 @@ DATA_SECTION
  LOCAL_CALCS
    TowsOnly=0;
   rseed = 123;
-  do_check=0;  
+  do_check=0;
+  do_sim=0;
   if (argc > 1)
   {
     int on=0;
