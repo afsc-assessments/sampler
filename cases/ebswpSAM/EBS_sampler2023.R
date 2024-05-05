@@ -9,7 +9,7 @@ library(tidyverse)
 library(scatterpie)
 library(data.table)
 library(xtable)
-mytheme <- theme_few()
+theme_set( ggthemes::theme_few())
 doc_dir <- "~/_mymods/ebswp/doc"
 #setwd("~/Onedrive/ebswp/data/sampler/cases/ebswp")
 # source sampler.R
@@ -32,7 +32,7 @@ cd %>% filter(FMP_Subarea=="BS",Species_Group=="Pollock") %>%group_by(Year) %>% 
 #   subset data.table to be columns used by sampler
 #dd <- data.table(cd[,c(1,20,21,22,15,16,17,23,19,27,4 )])
 #cdf <- cd %>% filter(Year==2019,FMP_Area=="BSAI",FMP_Subarea=="BS",Species_Group=="Pollock") %>% transmute(
-cdf <- cd %>% filter(Year==2021,FMP_Area=="BSAI",FMP_Subarea=="BS",Species_Group=="Pollock") %>% transmute(
+cdf <- cd %>% filter(Year==2023,FMP_Area=="BSAI",FMP_Subarea=="BS",Species_Group=="Pollock") %>% transmute(
     area=NMFS_Area,month=as.integer(as.numeric(WED)/100), strata=ifelse(month<6,1,ifelse(area>519,2,3)), catch=Catch )  %>% 
     select(strata, catch) %>% group_by(strata) %>% summarise(catch=sum(catch))
 glimpse(cdf)
@@ -41,19 +41,48 @@ glimpse(cdf)
 #Get adt (age data tibble)--------------------------
 #adt <- vroom::vroom("imported/akfin_age.csv",guess_max=50000)
 adt <- vroom::vroom("imported/poll_age.csv",guess_max=50000)
+summary(adt)
+adt<-adt %>% filter(YEAR<2022)
+adt22 <- vroom::vroom("imported/poll_age22.csv",col_names=F,guess_max=50000) %>% mutate(X1=as.numeric(X1))
+glimpse(adt22)
+names(adt22)<-names(adt)
+glimpse(adt)
+adt<-rbind(adt,adt22)
+adtin <- vroom::vroom("imported/norpac_age.csv",guess_max=500000)
+adt <- adtin  |> transmute(year=Year,
+  lat=`LatDD End`,
+  lon=`LonDD End`,
+  nmfs_area=`NMFS Area`,Length=`Length (cm)`,
+  wt=`Weight (kg)`, sex=Sex,age=Age, 
+  haul=`Haul Offload`,date=dmy(`Haul Offload Date`))
 
-adt$HAUL_OFFLOAD_DATE<-dmy(adt$HAUL_OFFLOAD_DATE)
-?dmy
 glimpse(adt)
 adt %>% filter(`FMP_SUBAREA`=="BS",!is.na(AGE)) %>%group_by(YEAR) %>% summarise(n()) %>% print(n=Inf)
+adt %>% filter(!is.na(age)) %>%group_by(year) %>% summarise(n()) %>% print(n=Inf)
 
 #Get ldt (length data tibble)--------------------------
 #ldt1 <- vroom::vroom("imported/akfin_len.csv",guess_max=50000)
 #ldt2 <- vroom::vroom("imported/norpac_len.csv",guess_max=50000)
-ldt <- vroom::vroom("imported/poll_len.csv",guess_max=50000)
+#ldt22 <- read_csv("imported/poll_len22.csv",col_names=F,guess_max=50000) 
+#ldt22 <- ldt22[,c(-5,-6)]
+#ldt22
+ldt <- vroom::vroom("imported/poll_len.csv",guess_max=50000) 
+ldt <- ldt %>% mutate(HAUL_OFFLOAD_DATE=dmy(HAUL_OFFLOAD_DATE))
+names(ldt) <- tolower(names(ldt))
+ldt
+ldt <- ldt |> filter(nmfs_area<540,nmfs_area>500) |> mutate(seas=ifelse(month(haul_offload_date)>5,"B","A"),
+              strata=ifelse(seas=="A","A Season",
+              ifelse(nmfs_area<520,"B Season SE","B Season NW"))) 
+ldt.w <- ldt |> filter(year>1990) |> group_by(year, sex, strata) |> summarise(lf = sum(frequency)) |> 
+  pivot_wider(names_from=c(sex,strata),values_from=lf)
+unique(ldt$nmfs_area)
+unique(ldt$sex)
+write_csv(ldt.w,"~/_mymods/ebswp/doc/data/lf.csv")
+
 #ldt$HAUL_OFFLOAD_DATE<-lubridate::dmy(ldt$HAUL_OFFLOAD_DATE)
+tail(ldt)
+summary(ldt$YEAR)
 glimpse(ldt)
-#glimpse(ldt2)
 #ldt <- ldt2
 #--------------------------
 
@@ -62,8 +91,11 @@ glimpse(ldt)
 #--------------------------
 SetBS(n=1000)
 # SetBS(n=1)
- i=2021;Sampler(iyr=i,io=T)
-for (i in 2021:2020) Sampler(iyr=i)
+ i=2022;
+ Sampler(iyr=i,io=T)
+
+
+for (i in 2022:2022) Sampler(iyr=i)
 # Idea for getting a 2021 age comp, change all the age data >0 to 2021...and leave 2021 data alone for LW
 names(adt)
 #adt <- 
@@ -86,7 +118,7 @@ library(ggthemes)
 #--------------------------
   # Stratified
   wsdt <- NULL
-for (i in 2021:1991) wsdt <- rbind(wsdt,read_table(paste0("results/str_wtage",i,".rep"),col_names=FALSE)) 
+for (i in 2022:1991) wsdt <- rbind(wsdt,read_table(paste0("results/str_wtage",i,".rep"),col_names=FALSE)) 
 names(wsdt) <- c("bs","hdr","yr","strata",1:15)
 dim(wsdt)
 wsdtl <- wsdt %>% pivot_longer( cols = 5:19, values_to = "wt",names_to="age") %>% mutate(age=as.numeric(age))
@@ -113,7 +145,7 @@ wsdtl %>% filter(yr==2019,age>2,age<10) %>% group_by(strata,Age=as.factor(age)) 
 
   # Aggregated, should be same as 9999?
 wdt <- NULL
-for (i in 2021:1991){
+for (i in 2022:1991){
   wdd <- (read_table(paste0("results/wtage",i,".rep"),col_names=FALSE))
   names(wdd) <- c("bs","str","yr",1:15)
   wdd <- wdd[-1001,]
@@ -129,6 +161,7 @@ sdwt<-wdt %>% pivot_longer(names_to="age",values_to="wt",cols=4:18) %>%
        transmute(yr,age=as.numeric(age),wt) %>% group_by(yr,age) %>% summarise(wt=sd(wt)) %>%
        pivot_wider(names_from=age,values_from=wt)
 write_csv(sdwt,file="sdwdt.csv")
+
 #--Survey weights-at-age
 sage <- read_csv("imported/srvage.csv",guess_max=5000,col_names=FALSE)
 names(sage) <- c( "CJ","HJ","REGION","VESS","CRUISE","HAUL", "SPECIMENID", "BIOSTRATUM", "SPECIES_CODE", "LENGTH", "SEX", "WEIGHT", "AGE", "MATURITY", "MATURITY_TABLE", "GONAD_WT")
@@ -210,12 +243,12 @@ edt %>% filter(type=="N",sex<3,year<2021,stratum<4) %>% mutate(season=ifelse(str
 #--------------------------
 # Read in catch-age bootstraps
 #--------------------------
-i=2021
+i=2022
 cdt <- (read.table(paste0("results/catage",i,".rep"),header=F))
 names(cdt) <- c("bs","str","yr",1:15)
 cdt <- cdt[-1001,]
 cdt
-for (i in 2020:1991){
+for (i in 2022:1991){
   cdd <- (read.table(paste0("results/catage",i,".rep"),header=F))
   names(cdd) <- c("bs","str","yr",1:15)
   cdd <- cdd[-1001,]
@@ -266,13 +299,14 @@ dvar_vector rtmp = elem_div((pobs-phat),sqrt(elem_prod(phat,(1-phat))));
   stmp*stmp/(rtmp*rtmp)
 
 # This can be modified to make catch-age table...
-cds.tab  <- xtable(cds.m,caption="test",digits=3)
+cds.tab  <- xtable::xtable(cds.m,caption="test",digits=3)
 cds.tab
 str(cds.tab)
 print(cds.tab, caption.placement = "top", include.rownames = FALSE)
 
 # table of length data by yr/strata/sex
 library(lubridate)
+library(xtable)
 names(ldt)
 ldf <- ldt %>% transmute(
       Year=YEAR,
@@ -288,20 +322,18 @@ ldf%>% group_by(Year,strata,sex) %>% summarize(n=sum(freq)) %>%
 #number of hauls and measurements
 ldf %>% group_by(Year) %>% 
   summarise(haulcount = n_distinct(haul),N_lengths=sum(freq)) %>% print(n=Inf) 
-adf <- adt %>% filter(NMFS_AREA<540) %>%
-      transmute(
+  glimpse(adt)
+adf <- adt %>% filter(nmfs_area<540) %>%
+      mutate(
         #haul   = ifelse((HAUL_JOIN==""),PORT_JOIN,HAUL_JOIN),
-        haul   = HAUL_OFFLOAD,
-        month  = month(HAUL_OFFLOAD_DATE),
+        month  = month(date),
         seas   = ifelse(month>5, 2, 1), 
-        strata = ifelse(seas==1, 1, ifelse(NMFS_AREA>519, 2, 3)), 
+        strata = ifelse(seas==1, 1, ifelse(nmfs_area>519, 2, 3)), 
         #lat    = (LATDD_START+LATDD_END)/2,
         #lon    = (LONDD_START+LONDD_END)/2,
-        sex    = ifelse(SEX=="F",1,2) ,
-        len    = LENGTH , age = ifelse(AGE==0,-9,AGE),
-        wt = ifelse(is.na(WEIGHT) | WEIGHT==0,-9,WEIGHT) , 
+        sex    = ifelse(sex=="F",1,2) ,
+        len    = Length ,
         age=ifelse(is.na(age),-9,age ) ,
-        year=YEAR
         ) %>% mutate( haul = as.integer(as.factor(haul)) )
 
        #mutate(w_bar_L=mean(wt)) %>% ungroup()
@@ -336,7 +368,7 @@ p <- ggplot(df) +
       outlier.size=.1,width=.8,notch=TRUE,notchwidth=.1,alpha=.8)  + ylim(c(0.85,1.15)) + xlab('Year') + 
      stat_summary(aes(x=Year,y=wtstd),fun=mean.data,geom='point',size=2,shape=19,color="blue") +
      geom_hline(yintercept=1,size=1) +
-     scale_x_discrete(breaks=c(seq(1997,2021,2))) +
+     scale_x_discrete(breaks=c(seq(1997,2023,2))) +
      ylab('Standardized weight given length') + mytheme + guides(fill="none") ;p
 # check collapts years     
 p <- ggplot(df,aes(y=wtstd)) + 
@@ -446,11 +478,14 @@ akmap <- get_googlemap(center=c(lon=-170,lat=57) ,color="color", maptype='hybrid
 names(adt)
 cohdf
 adf
-cohdf <- adf %>% filter(year>2012,!is.na(lon),age>0,!is.na(age)) %>% 
+cohdf <- adf %>% filter(year>2012,!is.na(lon),age>1,!is.na(age)) %>% 
       mutate(Cohort=as.factor(year-age)) %>% filter(Cohort %in% c(2013,2012))
       #-- 2018
-cohdf <- adf %>% filter(year>2012,!is.na(lon),age>0,!is.na(age)) %>% 
-      mutate(Cohort=as.factor(year-age)) %>% filter(Cohort %in% c(2018))
+cohdf <- adf %>% filter(year>2012,!is.na(lon),age>1,!is.na(age)) %>% 
+      mutate(Cohort=as.factor(year-age)) %>% filter(Cohort %in% c(2017,2018))
+cohdf <- adf %>% filter(year>2000,!is.na(lon),age>1,!is.na(age)) %>% 
+      mutate(Cohort=as.factor(year-age)) %>% filter(Cohort %in% c(2008,2018))
+
 
 mndfa<-  cohdf %>% group_by(Cohort,age) %>% summarise(lat=mean(lat),lon=mean(lon))
 mndf <-  cohdf %>% group_by(Cohort) %>% summarise(lat=mean(lat),lon=mean(lon))
@@ -459,7 +494,7 @@ mndf <-  cohdf %>% group_by(Cohort) %>% summarise(lat=mean(lat),lon=mean(lon))
 mndfna <-  cohdf %>% filter(strata>1) %>% group_by(Cohort,area=strata) %>% summarise(lat=mean(lat),lon=mean(lon))
 mndfna
 p1 <- ggmap(akmap) + 
-  geom_point(aes(x= lon, y=lat, color=Cohort,shape=Cohort), size=8, alpha=1,data=mndfna) +
+  #geom_point(aes(x= lon, y=lat, color=Cohort,shape=Cohort), size=8, alpha=1,data=mndfna) +
   geom_point(aes(x= lon, y=lat, color=Cohort ,shape=Cohort), size=6, alpha=1,data=mndfa) +
   geom_text(aes(x= lon, y=lat, label=age), size=3,alpha=1,data=mndfa) +
   xlab("Latitude") + ylab("Longitude") + theme_few(base_size=12)  +
@@ -625,7 +660,7 @@ i=1991
 wadt <- data.table(read.table(paste0("results/wtage",i,".rep"),header=TRUE) )
 #wadt <- data.table(read.table(paste0("mainresults/wtage",i,".rep"),header=TRUE) )
 names(wadt) <- c("bs","sam","yr",1:15)
-for (i in 1992:2021) {
+for (i in 1992:2022) {
   wadt <- rbind(wadt,data.table(read.table(paste0("results/wtage",i,".rep"),header=TRUE)) ,use.names=FALSE)
 }
 summary(wadt)
@@ -646,7 +681,7 @@ theme(panel.grid.major.x = element_blank())
 ##########
 i = 2020
 i = 2000
-for (i in c(1996,2001,2006,2011,2016 ,2021)) {
+for (i in c(1997,2002,2007,2012,2017 ,2022)) {
   p <- dtmp[yr %between% c(i-4,i) &age>2&age<11] %>% ggplot(aes(x=as.factor(age),y=swt,fill=as.factor(yr-age))) +
        geom_hline(yintercept=1,color="brown",size=1) + scale_fill_discrete(guide=FALSE) +
        geom_violin() + facet_grid(yr~.) + xlab("Age") + ylab("Body weight relative to mean") + 
@@ -656,7 +691,7 @@ for (i in c(1996,2001,2006,2011,2016 ,2021)) {
  #scale_fill_brewer(palette="Pastel2") # + scale_colour_manual(palette-"Pastel2") #scale_fill_discrete()
   ggsave(paste0("~/_mymods/ebswp/doc/figs/fsh_wtage_comb_",i,".pdf"),p,width=5,height=8)
 }
-ggsave("~/OneDrive/ebswp/EBSpollock/doc/figs/fsh_wtage_comb.pdf",p,width=5,height=8)
+ggsave("~/_mymods/ebswp/doc/figs/fsh_wtage_comb.pdf",p,width=5,height=8)
 
 #swadt.m %>% filter(wt>0) %>% group_by(age) %>%summarise(mean(wt))
 #swadt.m %>% filter(wt>0,age<16) %>% pivot_wider(names_from=str,values_from=wt)#group_by(age,str) %>% mutate()
@@ -717,37 +752,19 @@ dcast(wadt.m, yr ~ age, wt=value.var = "wt")
 #-------------------------------------------------
 # Stratified weights
 #-------------------------------------------------
-i=1991
-#swadt <- data.table(read.table(paste0("mainresults/str_wtage",i,".rep"),header=TRUE) )
-swadt <- (read.table(paste0("results/str_wtage",i,".rep"),header=TRUE) )
-swadt <- NULL
-for (i in 1991:2021) {
-  swadt <- (read.table(paste0("results/str_wtage",i,".rep"),header=TRUE) )
-  #swadt <- rbind(swadt,(read_table(paste0("results/str_wtage",i,".rep")))) 
-}
-names(swadt) <- c("bs","sam","yr","str",1:15)
-dim(swadt)
-
-# wide to long
-# Set strata labels
-(swadt$str[swadt$str==1]="A-season")
-(swadt$str[swadt$str==2]="B-season, NW")
-(swadt$str[swadt$str==3]="B-season, SE")
-(swadt$str[swadt$str==999]="Combined")
+swadt<-wsdt
 glimpse(swadt)
 swadt.m <- data.table::melt(swadt, measure.vars = 5:19, variable.name = "age", value.name = "wt")
 swadt.m$age <-as.numeric(swadt.m$age )
 swadt.m
-mytheme <- mytheme + theme(panel.grid.major.y = element_line(colour="grey",linetype="dashed"))
-#dt1 <- swadt.m[str=="Combined",.(bs,str,yr,wt,mnwt=mean(wt)),.(age)] 
-#dt2 <- swadt.m[str!="Combined",.(mnwt=mean(wt)),.(age)]
-library(data.table)
-dt1 <- swadt.m %>% filter(str=="Combined") %>% group_by(age) %>% 
-   summarise(mnwt=mean(wt)) 
+dt1 <- swadt.m %>% filter(str=="Annual") #%>% group_by(age) %>%  summarise(mnwt=mean(wt)) 
+dt1
 dt1 <- data.table(dt1)
 #dt1 <- swadt.m[str==999,.(mnwt=mean(wt)),.(age)] 
 dt2 <- data.table(swadt.m) #[,.(age,bs,str,yr,wt)] 
 dt2
+dt1
+
 setkey(dt2,age)
 setkey(dt1,age)
 dtmp <- merge(dt1,dt2)
@@ -756,15 +773,14 @@ dtmp
 dtmp <- dtmp[,.(yr,str,bs,age,wt,mnwt,swt=wt/mnwt)] #%>% mutate(bs,wt,mnwt,swt=wt/mnwt)
 dtmp
 # Plot over all years just by strata
-  dtmp %>% filter(age>2,age<11,str!="Combined") %>% 
-  ggplot(aes(x=as.factor(age),y=swt,fill=str)) 
   p <- dtmp[age>2&age<11&str!="Combined"] %>% ggplot(aes(x=as.factor(age),y=swt,fill=str)) 
   p <- p + geom_violin() + facet_grid(~str) + xlab("Age") + mytheme + 
        geom_hline(yintercept=1,size=1.0,color="brown") + ylab("Body weight relative to mean") +
   scale_fill_discrete(guide=FALSE) + scale_y_continuous(limits=c(0.4,1.6),breaks=c(0.5,.75,1.0,1.25,1.5))
        p
-  #ggsave("~/OneDrive/ebswp/EBSpollock/doc/figs/fsh_wtage.pdf",plot=p,width=8,height=6)
-  ggsave("~/_mymods/ebswp/doc/figs/fsh_wtage.pdf",plot=p,width=8,height=6)
+       p$data
+       
+  ggsave("~/_mymods/ebswp/doc/figs/fsh_wtage_str.pdf",plot=p,width=8,height=6)
 
 i=2021
 summary(dtmp)
@@ -922,7 +938,7 @@ dcast(wadt.m, yr ~ age, wt=value.var = "wt")
 i=1991
 swadt <- data.table(read.table(paste0("results/str_wtage",i,".rep"),header=TRUE) )
 names(swadt) <- c("bs","sam","yr","str",1:15)
-for (i in 1992:2021) 
+for (i in 1992:2023) 
 {
   swadt <- rbind(swadt,data.table(read.table(paste0("results/str_wtage",i,".rep"),header=TRUE)) ,use.names=FALSE)
 }
@@ -932,23 +948,23 @@ for (i in 1992:2021)
 (swadt$str[swadt$str==2]="B-season, NW")
 (swadt$str[swadt$str==3]="B-season, SE")
 (swadt$str[swadt$str==999]="Combined")
-str(swadt)
+glimpse(swadt)
 swadt.m <- melt(swadt, measure.vars = 5:19, variable.name = "age", value.name = "wt")
 swadt.m$age <-as.numeric(swadt.m$age )
 mytheme <- mytheme + theme(panel.grid.major.y = element_line(colour="grey",linetype="dashed"))
-i=2021
+i=2022
 summary(swadt.m)
 cmnwt <- swadt.m %>% filter(wt>0,str=="Combined") %>% group_by(age) %>% summarise(mnwt=mean(wt))
 cmnwt
-for (i in c(1996,2001,2006,2011 ,2016,2021))
-{
+for (i in c(1997,2002,2006,2012 ,2017,2022)) {
   p <- 
   swadt.m[yr %between% c(i-4,i)&age>2&age<11&str!="Combined"] %>% 
   filter(wt>0) %>% inner_join(cmnwt) %>% mutate(swt=wt/mnwt) %>% filter(swt<2,swt>.5) %>%
   ggplot(aes(x=as.factor(age),y=swt,fill=as.factor(yr-age))) 
-  p <- p + geom_violin() + facet_grid(yr~str) + xlab("Age") + mytheme + ylab("Average weight (kg)")
-  p <- p + scale_fill_discrete(guide=FALSE) + scale_fill_identity() + scale_y_continuous(limits=c(0,1.6),breaks=c(0.5,1.0,1.5))
-  ggsave(paste0("~/_mymods/ebswp/doc/figs/fsh_wtage_str_",i,".pdf"),p,width=5,height=8)
+  p <- p + geom_violin() + facet_grid(yr~str) + xlab("Age") + mytheme + ylab("Average weight (kg)") 
+  p <- p + scale_fill_discrete(guide=FALSE) + scale_fill_identity() + 
+    scale_y_continuous(limits=c(0,1.6),breaks=c(0.5,1.0,1.5))+ggthemes::theme_few()+ geom_hline(yintercept=1,color="grey")
+  ggsave(paste0("~/_mymods/ebswp/doc/figs/fsh_wtage_str_",i,".pdf"),p,width=6,height=8)
  #scale_fill_brewer(palette="Pastel2") # + scale_colour_manual(palette-"Pastel2") #scale_fill_discrete()
   print(p)
 }
