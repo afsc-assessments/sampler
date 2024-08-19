@@ -6,9 +6,10 @@ library(lubridate)
 library(tidyverse)
 library(keyring) # then set usernames and passwords using keyring
 
+
 #Source other functions used:
 GitDir<-"C:/GitProjects/sampler/R/"
-outdir<-"C:/Users/carey.mcgilliard/Work/SpatialGrowthAssessments/BSAI_NRS_sampler"
+outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2024/bsai_nrs/data"
 
 source(file.path(GitDir,"QueryAgesForSampler.R"), echo=TRUE)
 source(file.path(GitDir,"QueryLengthsForSampler.R"), echo=TRUE)
@@ -33,22 +34,22 @@ maxlen<-55
 
 #Note: you can define strata based on other variables, just make a map like this that can be joined to the datasets by a variable that is in both.
 #YFS StrataMap (strata are times of year here, but can also be NMFS_AREA or other)
-StrataMap<-data.frame(STRATA =c(1,1,1,1,2,2,2,2,3,3,3,3),
-                      MONTH = seq(from = 1,to = 12,by = 1)) #YFS: 3 strata over the months of the year
+#StrataMap<-data.frame(STRATA =c(1,1,1,1,2,2,2,2,3,3,3,3),
+#                      MONTH = seq(from = 1,to = 12,by = 1)) #YFS: 3 strata over the months of the year
 
 #NRS StrataMap (only one strata for BSAI NRS right now)
-#StrataMap<-data.frame(STRATA =rep(1,n = 12),
-#                      MONTH = seq(from = 1,to = 12,by = 1)) #NRS: 1 strata
+  StrataMap<-data.frame(STRATA =rep(1,n = 12),
+                        MONTH = seq(from = 1,to = 12,by = 1)) #NRS: 1 strata
 
 
 #Write the age data
-ageinfo<-SamAge(AFSC=AFSC,outdir=outdir,FmpArea=FmpArea,SpeciesCode=SpeciesCode,StrataMap=StrataMap)
+ageinfo<-SamAge(AFSC=AFSC,outdir=outdir,FmpArea=FmpArea,SpeciesCode=SpeciesCode,StrataMap=StrataMap,unsexed = TRUE)
 nage<-ageinfo$nages
 years<-ageinfo$years
 
 #Write the length data
 
-nlen<-SamLength(AFSC=AFSC,outdir=outdir,FmpArea=FmpArea,SpeciesCode=SpeciesCode,StrataMap=StrataMap,years=years)
+nlen<-SamLength(AFSC=AFSC,outdir=outdir,FmpArea=FmpArea,SpeciesCode=SpeciesCode,StrataMap=StrataMap,years=years,unsexed = TRUE)
 
 #Write the sam.dat files
 

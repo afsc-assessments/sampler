@@ -12,7 +12,7 @@ mytheme <- mytheme + theme( panel.background = element_rect(fill="white"), panel
 
 minage =1
 maxage = 20
-outdir<-"C:/Users/carey.mcgilliard/Work/SpatialGrowthAssessments/BSAI_NRS_sampler"
+outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2024/bsai_nrs/data"
 setwd(outdir)
 #source("C:/GitProjects/BSAI_NRS/R/sampler_NRS_functions.R", echo=TRUE)
 #source("C:/GitProjects/sampler/R/sampler_functions.R", echo=TRUE)

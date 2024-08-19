@@ -30,7 +30,7 @@
 #   
 # outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2022/NRS/Data/Fishery_Ages"
 
-SamAge<-function(AFSC,outdir,FmpArea,SpeciesCode,StrataMap) {
+SamAge<-function(AFSC,outdir,FmpArea,SpeciesCode,StrataMap,unsexed) {
 #-------------------------------
 #either need to add something to this query to only query otolith samples OR need to use the squash_sp_type table.
 MyQuery<-paste0("SELECT to_char(OBSINT.DEBRIEFED_AGE_SQUASH_SP_TYPE.PORT_JOIN) as PORT_JOIN,\n ",
@@ -60,11 +60,14 @@ AgeLength.df$PORT_JOIN <- as.character(AgeLength.df$PORT_JOIN)
 AgeLength.df$SEASON<-quarters(as.Date(AgeLength.df$HAUL_OFFLOAD_DATE))
 AgeLength.df$MONTH<-month(as.Date(AgeLength.df$HAUL_OFFLOAD_DATE))
 
-AgeLength.df<-AgeLength.df %>% drop_na(LENGTH,WEIGHT)
-AgeLength.df<-AgeLength.df %>% mutate(SEXNO=ifelse(SEX=="F",1,2))
-AgeLength.df<-AgeLength.df %>% mutate(AGE=ifelse(is.na(AGE),-9,AGE))
-AgeLength.df<-AgeLength.df %>% mutate(COUNTAGES = ifelse(AGE==-9,0,1))
+if (unsexed == FALSE) {
+ #do not include unsexed fish (if included tpl currently assigns 50% to each sex)
+AgeLength.df<-AgeLength.df %>% filter(SEX!='U')
+}
 
+AgeLength.df<-AgeLength.df %>% mutate(SEXNO=case_when(SEX=="F" ~ 1,SEX == 'M' ~ 2,SEX == 'U' ~ 3), AGE=ifelse(is.na(AGE),-9,AGE)) %>%
+                               drop_na(LENGTH, WEIGHT, SEXNO) %>%
+                               mutate(COUNTAGES = ifelse(AGE==-9,0,1))
 #needs to be done within year.
 #AgeLength.df$MAKEHAUL<-ifelse(is.na(AgeLength.df$HAUL_JOIN),AgeLength.df$PORT_JOIN,AgeLength.df$HAUL_JOIN)            # Data come from at-sea or port
 #AgeLength.df$HAULNO<-as.integer(as.factor(AgeLength.df$MAKEHAUL))

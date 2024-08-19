@@ -30,7 +30,7 @@
 #   
 # outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2022/NRS/Data/Fishery_Ages"
 
-SamLength<-function(AFSC,outdir,FmpArea,SpeciesCode,StrataMap,years) {
+SamLength<-function(AFSC,outdir,FmpArea,SpeciesCode,StrataMap,years,unsexed) {
 #-------------------------------
 #either need to add something to this query to only query otolith samples OR need to use the squash_sp_type table.
 MyQuery<-paste0("SELECT to_char(OBSINT.DEBRIEFED_LENGTH.PORT_JOIN) as PORT_JOIN,\n ",
@@ -58,8 +58,12 @@ Length.df$PORT_JOIN <- as.character(Length.df$PORT_JOIN)
 Length.df$SEASON<-quarters(as.Date(Length.df$HAUL_OFFLOAD_DATE))
 Length.df$MONTH<-month(as.Date(Length.df$HAUL_OFFLOAD_DATE))
 
+if (unsexed ==FALSE) {
+ Length.df<-Length.df %>% filter(SEX!='U')
+}
+
 Length.df<-Length.df %>% drop_na(LENGTH,FREQUENCY)
-Length.df<-Length.df %>% mutate(SEXNO=ifelse(SEX=="F",1,2))
+Length.df<-Length.df %>% mutate(SEXNO=case_when(SEX=="F" ~ 1,SEX == 'M' ~ 2,SEX == 'U' ~ 3))
 
 #needs to be done within year.
 #Length.df$MAKEHAUL<-ifelse(is.na(Length.df$HAUL_JOIN),Length.df$PORT_JOIN,Length.df$HAUL_JOIN)            # Data come from at-sea or port

@@ -22,9 +22,6 @@
 # StrataMap<-data.frame(STRATA =rep(1,n = 12),
 #                       MONTH = seq(from = 1,to = 12,by = 1)) #NRS: 1 strata
 
-#-------------------------------
-#CAUTION: RSOL is HARD WIRED IN TO THE QUERY RIGHT NOW! FIX THAT LATER!
-#-------------------------------
 SamDat<-function(AKFIN,outdir,CatchFmpArea="'BSAI'",CatchSpeciesCode="'RSOL'",minage,maxage,minlen,maxlen,StrataMap,years,nage,nlen) {
   
 NumStrata<-max(StrataMap$STRATA)
@@ -54,6 +51,7 @@ NumStrata<-max(StrataMap$STRATA)
 
 #Attention:
 #You might also need the foreign catch data here.
+print("the foreign catch data are not included in this query")
 
 MyQuery<-paste0("SELECT council.comprehensive_blend_ca.week_end_date,\n ",
                 "council.comprehensive_blend_ca.catch_activity_date,\n ",
