@@ -12,7 +12,8 @@ mytheme <- mytheme + theme( panel.background = element_rect(fill="white"), panel
 
 minage =1
 maxage = 20
-outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2024/bsai_nrs/data"
+endyr = 2024
+outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2024/bsai_nrs/data/fishery"
 setwd(outdir)
 #source("C:/GitProjects/BSAI_NRS/R/sampler_NRS_functions.R", echo=TRUE)
 #source("C:/GitProjects/sampler/R/sampler_functions.R", echo=TRUE)
@@ -32,7 +33,7 @@ if (est) {
 }
 
 
-for (y in 1998:2022) {
+for (y in 1998:endyr) {
   ctl_file = paste0("sam",y,".dat")
   if (est) {
     if (io)
@@ -48,7 +49,7 @@ for (y in 1998:2022) {
 #Read in datafiles from separate years and aggregate the info
 #--------------------------
 ctmp<-wtmp<-NULL
-for (i in c(1991:1994,1998:2022)) {
+for (i in c(1991:1994,1998:endyr)) {
   print(i)
   wtmp <- rbind(wtmp,read_table(paste0("results/sex_wtage",i,".rep"),col_names=FALSE))
   ctmp <- rbind(ctmp,read_table(paste0("results/sex_catage",i,".rep"),col_names=FALSE))

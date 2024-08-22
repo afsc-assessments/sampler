@@ -9,7 +9,7 @@ library(keyring) # then set usernames and passwords using keyring
 
 #Source other functions used:
 GitDir<-"C:/GitProjects/sampler/R/"
-outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2024/bsai_nrs/data"
+outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2024/bsai_nrs/data/fishery"
 
 source(file.path(GitDir,"QueryAgesForSampler.R"), echo=TRUE)
 source(file.path(GitDir,"QueryLengthsForSampler.R"), echo=TRUE)
