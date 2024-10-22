@@ -59,6 +59,12 @@ AgeLength.df$HAUL_JOIN[complete.cases(AgeLength.df$HJ_FIRST1)==F]<-NA
 AgeLength.df$PORT_JOIN <- as.character(AgeLength.df$PORT_JOIN)
 AgeLength.df$SEASON<-quarters(as.Date(AgeLength.df$HAUL_OFFLOAD_DATE))
 AgeLength.df$MONTH<-month(as.Date(AgeLength.df$HAUL_OFFLOAD_DATE))
+AgeLength.df$DAY<-day(as.Date(AgeLength.df$HAUL_OFFLOAD_DATE))
+AgeLength.df<-AgeLength.df %>% mutate(AB = case_when(MONTH<6 ~ "A",
+                                                     MONTH>=6 ~ "B"),
+                                      L170 = case_when(NMFS_AREA>=520 ~ "NW",
+                                                       NMFS_AREA < 520 ~ "SE"))
+
 
 if (unsexed == FALSE) {
  #do not include unsexed fish (if included tpl currently assigns 50% to each sex)

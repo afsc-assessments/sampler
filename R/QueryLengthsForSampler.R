@@ -57,7 +57,10 @@ Length.df$HAUL_JOIN[complete.cases(Length.df$HJ_FIRST1)==F]<-NA
 Length.df$PORT_JOIN <- as.character(Length.df$PORT_JOIN)
 Length.df$SEASON<-quarters(as.Date(Length.df$HAUL_OFFLOAD_DATE))
 Length.df$MONTH<-month(as.Date(Length.df$HAUL_OFFLOAD_DATE))
-
+Length.df<-Length.df %>% mutate(AB = case_when(MONTH<6 ~ "A",
+                                                     MONTH>=6 ~ "B"),
+                                      L170 = case_when(NMFS_AREA>=520 ~ "NW",
+                                                       NMFS_AREA < 520 ~ "SE"))
 if (unsexed ==FALSE) {
  Length.df<-Length.df %>% filter(SEX!='U')
 }

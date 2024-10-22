@@ -22,7 +22,7 @@
 # StrataMap<-data.frame(STRATA =rep(1,n = 12),
 #                       MONTH = seq(from = 1,to = 12,by = 1)) #NRS: 1 strata
 
-SamDat<-function(AKFIN,outdir,CatchFmpArea="'BSAI'",CatchSpeciesCode="'RSOL'",minage,maxage,minlen,maxlen,StrataMap,years,nage,nlen) {
+SamDat<-function(AKFIN,outdir,CatchFmpSubArea=c("'BS','AI'"),CatchSpeciesCode="'RSOL'",minage,maxage,minlen,maxlen,StrataMap,years,nage,nlen) {
   
 NumStrata<-max(StrataMap$STRATA)
 
@@ -68,10 +68,14 @@ MyQuery<-paste0("SELECT council.comprehensive_blend_ca.week_end_date,\n ",
                 "council.comprehensive_blend_ca.species_name\n ",
                 "FROM council.comprehensive_blend_ca\n ",
                 "WHERE council.comprehensive_blend_ca.species_group_code = ",CatchSpeciesCode," \n ",
-                "AND council.comprehensive_blend_ca.fmp_area = ",CatchFmpArea)
+                "AND council.comprehensive_blend_ca.fmp_subarea in ",CatchFmpSubArea)
 
 catchbio<-sqlQuery(AKFIN,MyQuery)
 catchbio$MONTH<-month(as.Date(catchbio$WEEK_END_DATE))
+catchbio<-catchbio %>% mutate(AB = case_when(MONTH<6 ~ "A",
+                                                     MONTH>=6 ~ "B"),
+                                      L170 = case_when(REPORTING_AREA_CODE>=520 ~ "NW",
+                                                       REPORTING_AREA_CODE < 520 ~ "SE"))
 
 catchbio<-full_join(catchbio,StrataMap)
 c.df<-catchbio %>% group_by(YEAR,STRATA) %>% summarise(cbio = sum(WEIGHT_POSTED))
@@ -84,6 +88,20 @@ for (y in 1:length(years)) {
   #nage<-read.table(file.path(outdir,paste0("nages",years[y],".dat")))
   #nlen<-read.table(file.path(outdir,paste0("nlens",years[y],".dat")))
   
+  # mystuff<-paste(
+  #  years[y],"\n",
+  #  "age",years[y],".dat","\n",
+  #  "len",years[y],".dat","\n",
+  #  nage[y],"\n",
+  #  nlen[y],"\n",
+  #  minage,"\n",
+  #  maxage,"\n",
+  #  minlen,"\n",
+  #  maxlen,"\n",
+  #  NumStrata,"\n",
+  #  myvec,"\n",
+  #  "results/Est_",years[y],".dat",sep = "")
+  
   mystuff<-paste(
    years[y],"\n",
    "age",years[y],".dat","\n",
@@ -94,12 +112,16 @@ for (y in 1:length(years)) {
    maxage,"\n",
    minlen,"\n",
    maxlen,"\n",
-   NumStrata,"\n",
-   myvec,"\n",
-   "results/Est_",years[y],".dat",sep = "")
+   NumStrata)
+  
+  morestuff<-paste(myvec)
+  laststuff<-paste("results/Est_",years[y],".dat",sep = "")
   
   write(noquote(mystuff),file.path(outdir,paste0("sam",years[y],".dat")),ncolumns=100, append=F)
-#  write.table(years[y],file =file.path(outdir,paste0("sam",years[y],".dat")),quote=FALSE,row.names = FALSE,col.names = FALSE)
+  write(noquote(morestuff),file.path(outdir,paste0("sam",years[y],".dat")),ncolumns=100, append=T)
+  write(noquote(laststuff),file.path(outdir,paste0("sam",years[y],".dat")),ncolumns=100, append=T)
+  
+  #  write.table(years[y],file =file.path(outdir,paste0("sam",years[y],".dat")),quote=FALSE,row.names = FALSE,col.names = FALSE)
   
 #  write.table(myvec,file = file.path(outdir,paste0("sam",years[y],".dat")),quote=FALSE,row.names = FALSE,col.names = FALSE,append = TRUE)
   

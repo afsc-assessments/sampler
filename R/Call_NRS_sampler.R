@@ -12,11 +12,12 @@ mytheme <- mytheme + theme( panel.background = element_rect(fill="white"), panel
 
 minage =1
 maxage = 20
-endyr = 2024
+endyr = 2023
 outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2024/bsai_nrs/data/fishery"
 setwd(outdir)
+source("C:/GitProjects/sampler/R/sampler_functions.R", echo=TRUE)
+
 #source("C:/GitProjects/BSAI_NRS/R/sampler_NRS_functions.R", echo=TRUE)
-#source("C:/GitProjects/sampler/R/sampler_functions.R", echo=TRUE)
 SetBS(n=1000) #set n = 1 if doing no bootstraps, this writes out an input file for number of bootstraps (bs_setup.dat)
 est = TRUE
 io = TRUE

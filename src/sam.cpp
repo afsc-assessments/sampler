@@ -9,9 +9,14 @@
   adstring agefile;
   adstring lenfile;
   adstring outfile;
+#ifdef DEBUG
+  #include <chrono>
+#endif
 #include <admodel.h>
+#ifdef USE_ADMB_CONTRIBS
 #include <contrib.h>
 
+#endif
   extern "C"  {
     void ad_boundf(int i);
   }
@@ -19,9 +24,39 @@
 
 model_data::model_data(int argc,char * argv[]) : ad_comm(argc,argv)
 {
+  adstring tmpstring;
+  tmpstring=adprogram_name + adstring(".dat");
+  if (argc > 1)
+  {
+    int on=0;
+    if ( (on=option_match(argc,argv,"-ind"))>-1)
+    {
+      if (on>argc-2 || argv[on+1][0] == '-')
+      {
+        cerr << "Invalid input data command line option"
+                " -- ignored" << endl;
+      }
+      else
+      {
+        tmpstring = adstring(argv[on+1]);
+      }
+    }
+  }
+  global_datafile = new cifstream(tmpstring);
+  if (!global_datafile)
+  {
+    cerr << "Error: Unable to allocate global_datafile in model_data constructor.";
+    ad_exit(1);
+  }
+  if (!(*global_datafile))
+  {
+    delete global_datafile;
+    global_datafile=NULL;
+  }
    TowsOnly=0;
   rseed = 123;
-  do_check=0;  
+  do_check=0;
+  do_sim=0;
   if (argc > 1)
   {
     int on=0;
@@ -614,6 +649,11 @@ model_data::model_data(int argc,char * argv[]) : ad_comm(argc,argv)
   }
   }
   exit(1);
+  if (global_datafile)
+  {
+    delete global_datafile;
+    global_datafile = NULL;
+  }
 }
 
 model_parameters::model_parameters(int sz,int argc,char * argv[]) : 
@@ -629,6 +669,11 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
 void model_parameters::userfunction(void)
 {
   obj_fun =0.0;
+#ifdef DEBUG
+  std::cout << "DEBUG: Total gradient stack used is " << gradient_structure::get()->GRAD_STACK1->total() << " out of " << gradient_structure::get_GRADSTACK_BUFFER_SIZE() << std::endl;;
+  std::cout << "DEBUG: Total dvariable address used is " << gradient_structure::get()->GRAD_LIST->total_addresses() << " out of " << gradient_structure::get_MAX_DLINKS() << std::endl;;
+  std::cout << "DEBUG: Total dvariable address used is " << gradient_structure::get()->ARR_LIST1->get_max_last_offset() << " out of " << gradient_structure::get_ARRAY_MEMBLOCK_SIZE() << std::endl;;
+#endif
 }
 
 void model_parameters::report(const dvector& gradients)
@@ -680,14 +725,16 @@ int main(int argc,char * argv[])
   #ifndef __SUNPRO_C
 std::feclearexcept(FE_ALL_EXCEPT);
   #endif
+  auto start = std::chrono::high_resolution_clock::now();
 #endif
     gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
     if (!arrmblsize) arrmblsize=15000000;
     model_parameters mp(arrmblsize,argc,argv);
-    mp.iprint=10;
+    mp.iprint = defaults::iprint;
     mp.preliminary_calculations();
     mp.computations(argc,argv);
 #ifdef DEBUG
+  std::cout << endl << argv[0] << " elapsed time is " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds." << endl;
   #ifndef __SUNPRO_C
 bool failedtest = false;
 if (std::fetestexcept(FE_DIVBYZERO))
