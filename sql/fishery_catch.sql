@@ -1,0 +1,18 @@
+SELECT
+council.comprehensive_blend_ca.week_end_date,
+council.comprehensive_blend_ca.reporting_area_code,
+council.comprehensive_blend_ca.agency_species_code,
+council.comprehensive_blend_ca.species_group_code,
+council.comprehensive_blend_ca.retained_or_discarded,
+council.comprehensive_blend_ca.weight_posted,
+council.comprehensive_blend_ca.agency_gear_code,
+council.comprehensive_blend_ca.harvest_sector,
+council.comprehensive_blend_ca.year,
+council.comprehensive_blend_ca.fmp_subarea,
+council.comprehensive_blend_ca.fmp_area
+FROM
+council.comprehensive_blend_ca
+WHERE council.comprehensive_blend_ca.species_group_code
+    -- insert CatchSpeciesCode
+AND council.comprehensive_blend_ca.fmp_area
+    -- insert CatchFmpSubArea
