@@ -10,21 +10,28 @@ mytheme <- mytheme + theme(text=element_text(size=18)) + theme(axis.title.x=elem
 mytheme <- mytheme + theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank() )
 mytheme <- mytheme + theme( panel.background = element_rect(fill="white"), panel.border = element_rect(colour="black", fill=NA, size=.5))
 
-minage =1
-maxage = 20
-endyr = 2021
+
 outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2025/rex_cie_review/data/fishery"
+# rex sole call to make the input data
+GitDir<-"C:/GitProjects/sampler/R/"
+source(file.path(GitDir,"CallQueriesForSamplerData.R"))
+info<-call_queries(GitDir = "C:/GitProjects/sampler/R/",outdir="C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2025/rex_cie_review/data/fishery",StrataMap = data.frame(STRATA = rep(1,12),MONTH = seq(from = 1,to = 12, by =1)), FmpArea = "600 and 650",SpeciesCode = "105", CatchSpeciesCode = "'REXS'" , CatchFmpSubArea =  "('CG','WG','SE','WY')", minage = 0, maxage = 20, minlen = 9, maxlen = 65)
+
+minage =0
+maxage = 20
+
 setwd(outdir)
 source("C:/GitProjects/sampler/R/sampler_functions.R", echo=TRUE)
 
 #source("C:/GitProjects/BSAI_NRS/R/sampler_NRS_functions.R", echo=TRUE)
-SetBS(n=1000) #set n = 1 if doing no bootstraps, this writes out an input file for number of bootstraps (bs_setup.dat)
+SetBS(n=1) #set n = 1 if doing no bootstraps, this writes out an input file for number of bootstraps (bs_setup.dat)
 est = TRUE
 io = TRUE
 
-#Loop over years and run sam:
-for (y in 1991:1994) {
-ctl_file = paste0("sam",y,".dat")
+#Loop over years and run sam (assumes sam.exe source folder is in your account's environment path or in the outdir):
+
+for (y in 2:length(info$years)) {
+ctl_file = paste0("sam",info$years[y],".dat")
 if (est) {
   if (io)
     system(paste0("sam -nox -io -ind  ",ctl_file))
@@ -34,26 +41,16 @@ if (est) {
 }
 
 
-for (y in 1998:endyr) {
-  ctl_file = paste0("sam",y,".dat")
-  if (est) {
-    if (io)
-      system(paste0("sam -nox -io -ind  ",ctl_file))
-    else
-      system(paste0("sam -ind  ",ctl_file))
-  }
-}
-
 # Sampler done running
 ##################
 
 #Read in datafiles from separate years and aggregate the info
 #--------------------------
 ctmp<-wtmp<-NULL
-for (i in c(1991:1994,1998:endyr)) {
-  print(i)
-  wtmp <- rbind(wtmp,read_table(paste0("results/sex_wtage",i,".rep"),col_names=FALSE))
-  ctmp <- rbind(ctmp,read_table(paste0("results/sex_catage",i,".rep"),col_names=FALSE))
+for (i in 2:length(info$years)) {
+  print(info$years[i])
+  wtmp <- rbind(wtmp,read_table(paste0("results/sex_wtage",info$years[i],".rep"),col_names=FALSE))
+  ctmp <- rbind(ctmp,read_table(paste0("results/sex_catage",info$years[i],".rep"),col_names=FALSE))
 }
 names(ctmp) <- names(wtmp) <- c("bs","id","year","sex",minage:maxage)
 wtage <- wtmp
@@ -64,7 +61,7 @@ catage <- ctmp
 
 #Aggregate catch-at-age data over bootstraps and format for fm.tpl data inputs  
 #Look for results/catagesex.csv
-cdf <- pivot_longer(catage,5:(maxage+4),names_to="age",values_to="catch") %>%
+cdf <- pivot_longer(catage,5:(length(minage:maxage)+4),names_to="age",values_to="catch") %>%
        mutate(sex=ifelse(sex==1,"F","M")) %>% filter(catch>0)
 cdf <- cdf %>% group_by(year,sex,age) %>% summarise(catch=mean(catch)) %>% mutate(sex=as.factor(sex),age=as.numeric(age)) 
 cdfp<-cdf #for plotting below
@@ -91,7 +88,7 @@ ggsave(filename = "results/catageplot.png",plot = g,device = "png")
 
 #Aggregate catch-at-age data over bootstraps and format for fm.tpl data inputs  
 #Look for results/catagesex.csv
-wdf <- pivot_longer(wtage,5:(maxage+4),names_to="age",values_to="weight") %>% 
+wdf <- pivot_longer(wtage,5:(length(minage:maxage)+4),names_to="age",values_to="weight") %>% 
        mutate(sex=ifelse(sex==1,"F","M")) %>% filter(weight>0)
 wdf <- wdf %>% group_by(year,sex,age) %>% summarise(weight=mean(weight)) %>% mutate(sex=as.factor(sex),age=as.numeric(age)) 
 wdfp<-wdf

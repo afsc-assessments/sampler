@@ -102,7 +102,7 @@ for (y in 1:length(years)) {
   #  myvec,"\n",
   #  "results/Est_",years[y],".dat",sep = "")
   
-  mystuff<-paste(
+  mystuff<-paste0(
    years[y],"\n",
    "age",years[y],".dat","\n",
    "len",years[y],".dat","\n",
