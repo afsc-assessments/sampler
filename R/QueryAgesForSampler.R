@@ -84,6 +84,7 @@ Ages.df<-full_join(AgeLength.df,StrataMap)
 save(Ages.df,file = file.path(outdir,"BigFisheryAges.Rdata"))
 
 hauls.df<-Ages.df %>% filter(AGE>0) %>% group_by(YEAR) %>% summarise(num_hauls = n_distinct(HAUL_JOIN),num_ports = n_distinct(PORT_JOIN))
+write.csv(hauls.df,file.path(outdir,"hauls_ports_age.csv"))
 
 years <-sort(unique(AgeLength.df$YEAR))
 final_years<-vector("numeric",length = 1)

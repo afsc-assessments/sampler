@@ -77,6 +77,9 @@ Lengths.df<-full_join(Length.df,StrataMap)
 #save so you don't have to do the query every time
 save(Lengths.df,file = file.path(outdir,"BigFisheryLengths.Rdata"))
 
+hauls_ports.df<-Lengths.df %>% group_by(YEAR) %>% summarise(num_hauls = n_distinct(HAUL_JOIN),num_ports = n_distinct(PORT_JOIN)) %>% mutate(samp = num_hauls + 9*num_ports)
+write.csv(hauls_ports.df,file.path(outdir,"hauls_ports_lengths.csv"))
+
 #years <-sort(unique(AgeLength.df$YEAR))
 numrows<-vector(mode="numeric",length=length(years))
 for (y in 1:length(years)) {
