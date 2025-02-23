@@ -10,8 +10,12 @@ mytheme <- mytheme + theme(text=element_text(size=18)) + theme(axis.title.x=elem
 mytheme <- mytheme + theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank() )
 mytheme <- mytheme + theme( panel.background = element_rect(fill="white"), panel.border = element_rect(colour="black", fill=NA, size=.5))
 
-
+#where to write input files for sam.tpl
 outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2025/rex_cie_review/data/fishery"
+
+#previously accepted run's fishery age data:
+run_dir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2025/rex_cie_review/runs/run1_2021_accepted"
+
 # rex sole call to make the input data
 GitDir<-"C:/GitProjects/sampler/R/"
 source(file.path(GitDir,"CallQueriesForSamplerData.R"))
@@ -29,8 +33,8 @@ est = TRUE
 io = TRUE
 
 #Loop over years and run sam (assumes sam.exe source folder is in your account's environment path or in the outdir):
-
-for (y in 2:length(info$years)) {
+#Note: 1992 catches are not reported as domestic- sam1992.dat catch biomass filled manually
+for (y in 1:length(info$years)) {
 ctl_file = paste0("sam",info$years[y],".dat")
 if (est) {
   if (io)
@@ -47,7 +51,7 @@ if (est) {
 #Read in datafiles from separate years and aggregate the info
 #--------------------------
 ctmp<-wtmp<-NULL
-for (i in 2:length(info$years)) {
+for (i in 1:length(info$years)) {
   print(info$years[i])
   wtmp <- rbind(wtmp,read_table(paste0("results/sex_wtage",info$years[i],".rep"),col_names=FALSE))
   ctmp <- rbind(ctmp,read_table(paste0("results/sex_catage",info$years[i],".rep"),col_names=FALSE))
@@ -112,8 +116,12 @@ geom_line(size=2, stat='identity') + theme_few()+ facet_wrap(.~year)
 
 ggsave(filename = "results/wtageplot.png",plot = w,device = "png")
 
+#compare to the fishery age data from the previously accepted model
+old_data<-read.csv(file.path(run_dir,"rex_fish_ages_2021_accepted.csv"))
 
-
+new_data<-WideComp %>% select(-c('0'))
+source("C:/GitProjects/sampler/cases/rex/compare_age_comps.R")
+compare_age_comps(new_dat=new_data,old_dat=old_data,yrs_srv_age=info$years,maxage = maxage)
 
 
 

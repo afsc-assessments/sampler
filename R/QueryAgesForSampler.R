@@ -83,6 +83,8 @@ Ages.df<-full_join(AgeLength.df,StrataMap)
 #save so you don't have to do the query every time
 save(Ages.df,file = file.path(outdir,"BigFisheryAges.Rdata"))
 
+hauls.df<-Ages.df %>% filter(AGE>0) %>% group_by(YEAR) %>% summarise(num_hauls = n_distinct(HAUL_JOIN),num_ports = n_distinct(PORT_JOIN))
+
 years <-sort(unique(AgeLength.df$YEAR))
 final_years<-vector("numeric",length = 1)
 numrows<-vector(mode="numeric",length=1)
@@ -101,6 +103,7 @@ for (y in 1:length(years)) {
 ageinfo<-list()
 ageinfo$years<-final_years[2:length(final_years)]
 ageinfo$nages<-numrows[2:length(numrows)]
+ageinfo$hauls_ports<-hauls.df
 return(ageinfo)
 }
 
