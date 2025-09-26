@@ -1,4 +1,5 @@
-library(tidyr)
+radian
+library(tidyverse)
 #install.packages("data.table")
 library(data.table)
 library(lubridate)
@@ -7,6 +8,7 @@ library(readr)
 library(ggplot2)
 #old_dir <- getwd()
 doc_dir <- ("~/_mymods/ebswp/doc/")
+doc_dir <- ("~/_mymods/afsc-assessments/ebs_pollock_safe/doc/")
 #setwd("~/Onedrive/models/Atka/2016/LengthWeight")
 
 #setwd("~/Onedrive/sampler/cases/ebswp")
@@ -48,15 +50,40 @@ Get_Age <- function(yr) {
  adf <- Get_Age(i)
  adf
 names(adf) 
-for (i in 1992:2020)
+for (i in 1992:2024)
  adf <- rbind(adf, Get_Age(i))
 
+#adf <- read_csv("imported/poll_age_all.csv")
+adf <- read_csv("imported/akfin_age.csv")
 # Stuff I like for plot look...
 mytheme <- theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank(), panel.grid.major.y = element_line(colour="grey80", linetype="dashed"))
 mytheme <- mytheme + theme(text=element_text(size=18)) + theme(axis.title.x=element_text(size=22) ,axis.title.y=element_text(size=22))
 mytheme <- mytheme + theme(panel.background = element_rect(fill="white"), panel.border = element_rect(colour="black",fill=NA,size=1.2))
-
+adf<- janitor::clean_names(adf)
+summary(adf$year)
 names(adf)
+adf <- adf  |> select(year,haul_offload,haul_offload_date,nmfs_area,gear, fmp_subarea,gear,length=length_cm,weight=weight_kg,age,sex)
+glimpse(adf)
+summary(adf)
+library(lubridate)
+adftmp<- adf |> mutate(
+haul   = as.integer(as.factor(haul_offload)),
+#lat    = (LATDD_START  + LATDD_END )/2,
+#lon    = (LONDD_START  + LONDD_END )/2,
+area   = nmfs_area, 
+month  = month(dmy_hm(haul_offload_date)),
+seas   = ifelse(month>5, 2, 1), 
+strata = ifelse(seas==1, "A-season", ifelse(nmfs_area>519, "B-season, NW", "B-season, SE")), 
+sex = ifelse(sex=="F",1,2) ,
+len    = length, 
+age = ifelse(age==0,-9,age),
+wt = ifelse(is.na(weight)|weight==0,-9,weight)
+)
+ymd_hm(adf$haul_offload_date)
+
+glimpse(adftmp)
+#age=ifelse(is.na(age),-9,age ) )
+
 
 # Suss out what's needed
 # select area, rename etc
@@ -64,14 +91,21 @@ names(adf)
 # Now narrown to main data range to be less than 45 cm and make new field 
 #df <- filter(df,Length>=30, Length<=45,wt<1.8) %>% group_by(Length) %>% transmute(w_bar_L=mean(wt),wtstd = wt/w_bar_L,wt,mo,yr)
 
+glimpse(adf)
+names(adf)
+glimpse(adftmp)
+summary(adftmp)
 str(adf)
+names(adf) <- tolower( names(adf))
 # Screen out pre 1997 data 
-df <- as.data.frame(filter(adf,wt>0,year>1996) %>% select(age=age,sex=sex,Length=len,wt,year,month,strata ) )
+df <- as.data.frame(filter(adf,weight>0,year>1996) %>% 
+  mutate(month=month(mdy_hm(haul_offload_date)))  |> 
+  select(age=age,sex=sex,Length=length,wt=weight,year,month ) )
 # or not 
-df <- as.data.frame(filter(adf,wt>0          ) %>% select(age=age,sex=sex,Length=len,wt,year,month,strata ) )
+df <- as.data.frame(filter(adftmp,weight>0          ) %>% mutate(month=month(mdy_hm(haul_offload_date)))  |>  select(age=age,sex=sex,Length=length,weight,year,month,strata ) )
 summary(df)
 # Screen out outliers
-df <- filter(df,Length>=35, Length<=60,wt<3.0) %>% group_by(Length) %>% transmute(w_bar_L=mean(wt),wtstd = wt/w_bar_L,wt,month,year,Year=as.factor(year),strata,sex)
+df <- filter(df,Length>=35, Length<=60,wt<3.0) %>% group_by(Length) %>% transmute(w_bar_L=mean(wt),wtstd = wt/w_bar_L,wt,month,year,Year=as.factor(year),sex)
 dim(df)
 #df <- group_by(df, Length) %>% transmute(w_bar_L=mean(wt),wtstd = wt/w_bar_L,wt,month,yr,Year)
 #DT <- data.table(df)[Length>20 & Length<=65 & wt < 3., .(wt,month,yr,wtstd=wt/mean(wt)), Length]
@@ -80,23 +114,23 @@ names(df)
 # Look by year
 p <- ggplot(df) + 
      geom_hline(yintercept=1,size=1) +
-     scale_x_discrete(breaks=c(seq(1997,2020,2))) +
+     scale_x_discrete(breaks=c(seq(1997,2024,2))) +
      geom_boxplot(aes(x=Year,y=wtstd,fill=Year),outlier.size=.2,width=.7,notch=TRUE,alpha=.3)  + ylim(c(0.85,1.15)) + xlab('Year') + 
-     ylab('Standardized weight given length') + mytheme + guides(fill=FALSE) 
-     p
-ggsave(paste0(doc_dir,"/figs/fsh_lw_anom_yr_box.pdf"),p,width=10,height=5)
+     ylab('Standardized weight given length') + mytheme + guides(fill=FALSE) ;p
+ggsave(paste0(doc_dir,"/figs/fsh_lw_anom_yr_box.pdf"),p,width=12,height=9)
+doc_dir
 
 library(ggthemes)
      p <- df %>% group_by(year) %>% summarise(Mean=mean(wtstd)) %>% ggplot(aes(x=year,y=Mean)) + geom_smooth() + geom_point(color="red",size=4) +
-     scale_x_continuous(breaks=c(seq(1990,2020,2))) + ylab("Mean body mass anomaly") +
+     scale_x_continuous(breaks=c(seq(1990,2024,2))) + ylab("Mean body mass anomaly") +
      geom_hline(yintercept=1,size=1) + mytheme + ylim(c(0.925,1.075)) ;p
-ggsave(paste0(doc_dir,"/figs/fsh_lw_anom_yr_mean"),p,width=10,height=5)
+ggsave(paste0(doc_dir,"/figs/fsh_lw_anom_yr_mean.pdf"),p,width=10,height=5)
 
 # Look by strata/year
 p <- ggplot(df) + 
      geom_hline(yintercept=1,size=1) +
-     geom_boxplot(aes(x=Year,y=wtstd,fill=Year),outlier.size=.2,width=.7,notch=TRUE,alpha=.3)  + ylim(c(0.85,1.15)) + xlab('Year') + 
-     scale_x_discrete(breaks=c(seq(1996,2020,2))) +
+     geom_boxplot(aes(x=year,y=wtstd,fill=year),outlier.size=.2,width=.7,notch=TRUE,alpha=.3)  + ylim(c(0.85,1.15)) + xlab('Year') + 
+     scale_x_discrete(breaks=c(seq(1996,2024,2))) +
      facet_wrap(~ strata,nrow=3) + 
      ylab('Standardized weight given length') + mytheme + guides(fill=FALSE) 
 p
