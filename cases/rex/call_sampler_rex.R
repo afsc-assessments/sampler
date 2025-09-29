@@ -5,13 +5,14 @@ library(tidyverse)
 library(data.table)
 library(xtable)
 library(ggthemes)
+library(RODBC)
 mytheme <- theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank(), panel.grid.major.y = element_blank())# element_line(colour="grey60", linetype="dashed"))
 mytheme <- mytheme + theme(text=element_text(size=18)) + theme(axis.title.x=element_text(size=22) ,axis.title.y=element_text(size=22))
 mytheme <- mytheme + theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank() )
 mytheme <- mytheme + theme( panel.background = element_rect(fill="white"), panel.border = element_rect(colour="black", fill=NA, size=.5))
 
 #where to write input files for sam.tpl
-outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2025/rex_cie_review/data/fishery"
+outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2025/rex/data/sampler"
 
 #previously accepted run's fishery age data:
 run_dir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2025/rex_cie_review/runs/run1_2021_accepted"
@@ -19,7 +20,7 @@ run_dir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2025/rex_cie_review
 # rex sole call to make the input data
 GitDir<-"C:/GitProjects/sampler/R/"
 source(file.path(GitDir,"CallQueriesForSamplerData.R"))
-info<-call_queries(GitDir = "C:/GitProjects/sampler/R/",outdir="C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2025/rex_cie_review/data/fishery",StrataMap = data.frame(STRATA = rep(1,12),MONTH = seq(from = 1,to = 12, by =1)), FmpArea = "600 and 650",SpeciesCode = "105", CatchSpeciesCode = "'REXS'" , CatchFmpSubArea =  "('CG','WG','SE','WY')", minage = 0, maxage = 20, minlen = 9, maxlen = 65)
+info<-call_queries(GitDir = GitDir,outdir=file.path(outdir),StrataMap = data.frame(STRATA = rep(1,12),MONTH = seq(from = 1,to = 12, by =1)), FmpArea = "600 and 650",SpeciesCode = "105", CatchSpeciesCode = "'REXS'" , CatchFmpSubArea =  "('CG','WG','SE','WY')", minage = 0, maxage = 20, minlen = 9, maxlen = 65)
 
 minage =0
 maxage = 20
@@ -53,8 +54,8 @@ if (est) {
 ctmp<-wtmp<-NULL
 for (i in 1:length(info$years)) {
   print(info$years[i])
-  wtmp <- rbind(wtmp,read_table(paste0("results/sex_wtage",info$years[i],".rep"),col_names=FALSE))
-  ctmp <- rbind(ctmp,read_table(paste0("results/sex_catage",info$years[i],".rep"),col_names=FALSE))
+  wtmp <- rbind(wtmp,read_table(file = here::here(file.path("results",paste0("sex_wtage",info$years[i],".rep"))),col_names=FALSE))
+  ctmp <- rbind(ctmp,read_table(file = here::here(file.path("results",paste0("sex_catage",info$years[i],".rep"))),col_names=FALSE))
 }
 names(ctmp) <- names(wtmp) <- c("bs","id","year","sex",minage:maxage)
 wtage <- wtmp
@@ -112,7 +113,7 @@ write_csv(WideWts,"results/wtagesex.csv")
 # write_csv(tswt,"results/wtagesex.csv")
 
 w<-ggplot(wdfp,aes(x=age,y=weight,fill=sex,color=sex)) + 
-geom_line(size=2, stat='identity') + theme_few()+ facet_wrap(.~year)
+geom_line(linewidth=2, stat='identity') + theme_few()+ facet_wrap(.~year)
 
 ggsave(filename = "results/wtageplot.png",plot = w,device = "png")
 
@@ -121,7 +122,14 @@ old_data<-read.csv(file.path(run_dir,"rex_fish_ages_2021_accepted.csv"))
 
 new_data<-WideComp %>% select(-c('0'))
 source("C:/GitProjects/sampler/cases/rex/compare_age_comps.R")
-compare_age_comps(new_dat=new_data,old_dat=old_data,yrs_srv_age=info$years,maxage = maxage)
+p<-compare_age_comps(new_dat=new_data,old_dat=old_data,yrs_srv_age=info$years,maxage = maxage)
+p$plot_diffs
+ggsave(filename = "results/old_new_age_diffs.png",plot = p$plot_diffs,device = "png")
+
+p$plot_overlay
+ggsave(filename = "results/old_new_age_overlay.png",plot = p$plot_overlay,device = "png")
+
+
 
 
 
