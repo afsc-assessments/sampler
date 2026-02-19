@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Jim Ianelli">
+
+<title>Sampler refactor plan (sam.tpl → R)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="index_files/libs/clipboard/clipboard.min.js"></script>
+<script src="index_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="index_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="index_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="index_files/libs/quarto-html/popper.min.js"></script>
+<script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="index_files/libs/quarto-html/anchor.min.js"></script>
+<link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="index_files/libs/bootstrap/bootstrap-d6a003b94517c951b2d65075d42fb01b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#scope-and-constraints" id="toc-scope-and-constraints" class="nav-link active" data-scroll-target="#scope-and-constraints"><span class="header-section-number">1</span> Scope and constraints</a></li>
+  <li><a href="#deliverables" id="toc-deliverables" class="nav-link" data-scroll-target="#deliverables"><span class="header-section-number">2</span> Deliverables</a></li>
+  <li><a href="#highlevel-pipeline" id="toc-highlevel-pipeline" class="nav-link" data-scroll-target="#highlevel-pipeline"><span class="header-section-number">3</span> High‑level pipeline</a></li>
+  <li><a href="#data-structures-tidy" id="toc-data-structures-tidy" class="nav-link" data-scroll-target="#data-structures-tidy"><span class="header-section-number">4</span> Data structures (tidy)</a></li>
+  <li><a href="#performance-approach" id="toc-performance-approach" class="nav-link" data-scroll-target="#performance-approach"><span class="header-section-number">5</span> Performance approach</a></li>
+  <li><a href="#algorithm-mapping-sam.tpl-r" id="toc-algorithm-mapping-sam.tpl-r" class="nav-link" data-scroll-target="#algorithm-mapping-sam.tpl-r"><span class="header-section-number">6</span> Algorithm mapping (sam.tpl → R)</a></li>
+  <li><a href="#proposed-r-function-skeleton" id="toc-proposed-r-function-skeleton" class="nav-link" data-scroll-target="#proposed-r-function-skeleton"><span class="header-section-number">7</span> Proposed R function skeleton</a></li>
+  <li><a href="#output-specification" id="toc-output-specification" class="nav-link" data-scroll-target="#output-specification"><span class="header-section-number">8</span> Output specification</a></li>
+  <li><a href="#benchmark-plan" id="toc-benchmark-plan" class="nav-link" data-scroll-target="#benchmark-plan"><span class="header-section-number">9</span> Benchmark plan</a></li>
+  <li><a href="#usage" id="toc-usage" class="nav-link" data-scroll-target="#usage"><span class="header-section-number">10</span> Usage</a></li>
+  <li><a href="#packaging" id="toc-packaging" class="nav-link" data-scroll-target="#packaging"><span class="header-section-number">11</span> Packaging</a></li>
+  <li><a href="#minimal-example-dataset" id="toc-minimal-example-dataset" class="nav-link" data-scroll-target="#minimal-example-dataset"><span class="header-section-number">12</span> Minimal example dataset</a></li>
+  <li><a href="#next-steps" id="toc-next-steps" class="nav-link" data-scroll-target="#next-steps"><span class="header-section-number">13</span> Next steps</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Sampler refactor plan (sam.tpl → R)</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Jim Ianelli </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="scope-and-constraints" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Scope and constraints</h1>
+<p><strong>Goal:</strong> Replace <code>sam.tpl</code> with an R implementation that preserves <strong>input file formats</strong> (<code>sam*.dat</code>, <code>age*.dat</code>, <code>len*.dat</code>, <code>bs_setup.dat</code>) and produces a <strong>single tidy output table</strong>. Speed is a priority.</p>
+<p><strong>Out of scope (for now):</strong></p>
+<ul>
+<li><code>.rep</code> files</li>
+<li>Changing input formats</li>
+<li>External database queries</li>
+</ul>
+</section>
+<section id="deliverables" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Deliverables</h1>
+<ol type="1">
+<li><code>R/sampler_refactor.R</code> (new): high‑performance R implementation.</li>
+<li><code>results/sampler_tidy.parquet</code>: single tidy table.</li>
+<li><code>results/sampler_bootstrap.parquet</code>: bootstrap outputs stored separately.</li>
+<li><code>index.html</code> (this file rendered from <code>index.qmd</code>) for GitHub Pages.</li>
+</ol>
+</section>
+<section id="highlevel-pipeline" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> High‑level pipeline</h1>
+<ol type="1">
+<li>Read control file (<code>sam*.dat</code>) and bootstrap settings (<code>bs_setup.dat</code>).</li>
+<li>Read and validate <code>age*.dat</code> and <code>len*.dat</code>.</li>
+<li>Compute:
+<ul>
+<li>length frequencies</li>
+<li>age‑length keys (ALK)</li>
+<li>catch‑at‑age</li>
+<li>weight‑at‑age</li>
+</ul></li>
+<li>Bootstrap if requested.</li>
+<li>Return <strong>one tidy table</strong> with all outputs.</li>
+</ol>
+</section>
+<section id="data-structures-tidy" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Data structures (tidy)</h1>
+<p>All outputs will be stored in one long table with the following canonical columns:</p>
+<ul>
+<li><code>year</code></li>
+<li><code>strata</code></li>
+<li><code>sex</code> (1 = F, 2 = M, 3 = U)</li>
+<li><code>age</code></li>
+<li><code>len</code></li>
+<li><code>metric</code> (e.g., <code>lf_freq</code>, <code>lf_prop</code>, <code>alk_p</code>, <code>catch_at_age</code>, <code>wt_at_age</code>)</li>
+<li><code>value</code></li>
+</ul>
+</section>
+<section id="performance-approach" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Performance approach</h1>
+<ul>
+<li>Use <strong>data.table</strong> for in‑memory joins/aggregation.</li>
+<li>Precompute integer indices for strata/sex/age/length bins.</li>
+<li>Avoid repeated reshaping; keep long format and aggregate once per metric.</li>
+<li>Use <code>setDTthreads()</code> for parallel group operations when available.</li>
+</ul>
+</section>
+<section id="algorithm-mapping-sam.tpl-r" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Algorithm mapping (sam.tpl → R)</h1>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>sam.tpl block</th>
+<th>R function</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Read control + bs</td>
+<td><code>read_control()</code>, <code>read_bs_setup()</code></td>
+<td>no format changes</td>
+</tr>
+<tr class="even">
+<td>Read age/len inputs</td>
+<td><code>read_age()</code>, <code>read_len()</code></td>
+<td>fast <code>fread()</code></td>
+</tr>
+<tr class="odd">
+<td>LF, ALK, Wt‑Len</td>
+<td><code>compute_lf()</code>, <code>compute_alk()</code>, <code>compute_wl()</code></td>
+<td>data.table group ops</td>
+</tr>
+<tr class="even">
+<td>Catch‑at‑age</td>
+<td><code>compute_caa()</code></td>
+<td>apply ALK to LF + strata catch</td>
+</tr>
+<tr class="odd">
+<td>Wt‑at‑age</td>
+<td><code>compute_wta()</code></td>
+<td>weighted mean by age</td>
+</tr>
+<tr class="even">
+<td>Bootstrap loop</td>
+<td><code>bootstrap_sampler()</code></td>
+<td>resample by haul IDs</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="proposed-r-function-skeleton" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Proposed R function skeleton</h1>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>read_control <span class="ot">&lt;-</span> <span class="cf">function</span>(path) {</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">scan</span>(path, <span class="at">what =</span> <span class="st">"character"</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">year =</span> <span class="fu">as.integer</span>(x[<span class="dv">1</span>]),</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">agefile =</span> x[<span class="dv">2</span>],</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">lenfile =</span> x[<span class="dv">3</span>],</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">na =</span> <span class="fu">as.integer</span>(x[<span class="dv">4</span>]),</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">nl =</span> <span class="fu">as.integer</span>(x[<span class="dv">5</span>]),</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">a1 =</span> <span class="fu">as.integer</span>(x[<span class="dv">6</span>]),</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">a2 =</span> <span class="fu">as.integer</span>(x[<span class="dv">7</span>]),</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">l1 =</span> <span class="fu">as.integer</span>(x[<span class="dv">8</span>]),</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">l2 =</span> <span class="fu">as.integer</span>(x[<span class="dv">9</span>]),</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">nstrata =</span> <span class="fu">as.integer</span>(x[<span class="dv">10</span>]),</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">strata_catch =</span> <span class="fu">as.numeric</span>(x[<span class="dv">11</span><span class="sc">:</span>(<span class="dv">10</span> <span class="sc">+</span> <span class="fu">as.integer</span>(x[<span class="dv">10</span>]))]),</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">outfile =</span> x[<span class="dv">11</span> <span class="sc">+</span> <span class="fu">as.integer</span>(x[<span class="dv">10</span>])]</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>read_bs_setup <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">path =</span> <span class="st">"bs_setup.dat"</span>) {</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">scan</span>(path, <span class="at">what =</span> <span class="st">"numeric"</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">nbs =</span> <span class="fu">as.integer</span>(x[<span class="dv">2</span>]),</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">sam_level_age_tows =</span> x[<span class="dv">3</span>],</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">sam_level_ages =</span> x[<span class="dv">4</span>],</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">sam_level_lf_tows =</span> x[<span class="dv">5</span>],</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">sam_level_lfreqs =</span> x[<span class="dv">6</span>]</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>read_age <span class="ot">&lt;-</span> <span class="cf">function</span>(path) {</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  dt <span class="ot">&lt;-</span> <span class="fu">fread</span>(path, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"haul"</span>,<span class="st">"sex"</span>,<span class="st">"age"</span>,<span class="st">"wt"</span>,<span class="st">"len"</span>))</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>  dt[, haul <span class="sc">:</span><span class="er">=</span> <span class="fu">as.integer</span>(haul)]</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>  dt</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>read_len <span class="ot">&lt;-</span> <span class="cf">function</span>(path) {</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>  dt <span class="ot">&lt;-</span> <span class="fu">fread</span>(path, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"haul"</span>,<span class="st">"sex"</span>,<span class="st">"len"</span>,<span class="st">"freq"</span>))</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>  dt[, haul <span class="sc">:</span><span class="er">=</span> <span class="fu">as.integer</span>(haul)]</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>  dt</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>compute_lf <span class="ot">&lt;-</span> <span class="cf">function</span>(len_dt) {</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>  len_dt[, .(<span class="at">freq =</span> <span class="fu">sum</span>(freq)), by <span class="ot">=</span> .(strata, sex, len)]</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>compute_alk <span class="ot">&lt;-</span> <span class="cf">function</span>(age_dt) {</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>  age_dt[, .N, by <span class="ot">=</span> .(strata, sex, len, age)</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    ][, p <span class="sc">:</span><span class="er">=</span> N <span class="sc">/</span> <span class="fu">sum</span>(N), by <span class="ot">=</span> .(strata, sex, len)</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    ][, .(strata, sex, len, age, p)]</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>compute_caa <span class="ot">&lt;-</span> <span class="cf">function</span>(lf_dt, alk_dt, strata_catch) {</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>  <span class="co"># join LF with ALK, scale by strata catch</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>  dt <span class="ot">&lt;-</span> lf_dt[alk_dt, on <span class="ot">=</span> .(strata, sex, len), allow.cartesian <span class="ot">=</span> <span class="cn">TRUE</span>]</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>  dt[, catch_n <span class="sc">:</span><span class="er">=</span> freq <span class="sc">*</span> p]</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>  dt[, .(<span class="at">catch_at_age =</span> <span class="fu">sum</span>(catch_n)), by <span class="ot">=</span> .(strata, sex, age)]</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>compute_wta <span class="ot">&lt;-</span> <span class="cf">function</span>(age_dt) {</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>  age_dt[, .(<span class="at">wt_at_age =</span> <span class="fu">weighted.mean</span>(wt, <span class="at">w =</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>         by <span class="ot">=</span> .(strata, sex, age)]</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>bootstrap_sampler <span class="ot">&lt;-</span> <span class="cf">function</span>(age_dt, len_dt, nbs, <span class="at">seed =</span> <span class="dv">123</span>) {</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set.seed</span>(seed)</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>  <span class="co"># resample hauls within strata/sex for age and length datasets</span></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>  <span class="co"># return list of tidy tables with bootstrap id</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="output-specification" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Output specification</h1>
+<p><strong>Point estimates</strong> are stored in a single long table with columns:</p>
+<ul>
+<li><code>year</code>, <code>strata</code>, <code>sex</code>, <code>age</code>, <code>len</code>, <code>metric</code>, <code>value</code></li>
+</ul>
+<p><strong>Bootstrap outputs</strong> are stored separately with the same schema plus <code>bootstrap</code>.</p>
+<p>Recommended storage: <strong>Parquet</strong> for speed and size.</p>
+</section>
+<section id="benchmark-plan" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Benchmark plan</h1>
+<p>Add a benchmark section comparing ADMB vs R on:</p>
+<ul>
+<li>runtime (seconds)</li>
+<li>peak memory (MB)</li>
+<li>row counts and checksum of key outputs</li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>benchmark <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="fu">c</span>(<span class="st">"ADMB"</span>, <span class="st">"R"</span>),</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">runtime_sec =</span> <span class="fu">c</span>(<span class="cn">NA_real_</span>, <span class="cn">NA_real_</span>),</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_mem_mb =</span> <span class="fu">c</span>(<span class="cn">NA_real_</span>, <span class="cn">NA_real_</span>),</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">rows =</span> <span class="fu">c</span>(<span class="cn">NA_integer_</span>, <span class="cn">NA_integer_</span>),</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">checksum =</span> <span class="fu">c</span>(<span class="cn">NA_character_</span>, <span class="cn">NA_character_</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>benchmark</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="usage" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Usage</h1>
+<p>Required R packages: <code>data.table</code>, <code>arrow</code>. The refactor writes a timing log to <code>results/sampler_refactor.log</code> by default (prefix configurable).</p>
+<p>For GitHub Pages, render <code>index.qmd</code> to <code>index.html</code> and publish via <code>/docs</code> or <code>gh-pages</code>.</p>
+</section>
+<section id="packaging" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> Packaging</h1>
+<p>A clean package tree is staged in <code>pkg/</code> for <code>R CMD build</code> and <code>R CMD check</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> CMD build pkg</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> CMD check samplerrefactor_0.1.0.tar.gz <span class="at">--no-manual</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> refactor CONTROL=example/sam2020.dat BS=example/bs_setup.dat OUT=results</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> render-only</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="minimal-example-dataset" class="level1" data-number="12">
+<h1 data-number="12"><span class="header-section-number">12</span> Minimal example dataset</h1>
+<p>A tiny test dataset is stored in <code>example/</code>:</p>
+<ul>
+<li><code>example/sam2020.dat</code></li>
+<li><code>example/age2020.dat</code></li>
+<li><code>example/len2020.dat</code></li>
+<li><code>example/bs_setup.dat</code></li>
+</ul>
+<p>Run from the <code>example/</code> directory to keep relative paths intact.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>point <span class="ot">&lt;-</span> arrow<span class="sc">::</span><span class="fu">read_parquet</span>(<span class="st">"results/sampler_tidy.parquet"</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>boot  <span class="ot">&lt;-</span> arrow<span class="sc">::</span><span class="fu">read_parquet</span>(<span class="st">"results/sampler_bootstrap_2020.parquet"</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Basic checks</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>expected_strata <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(point<span class="sc">$</span>strata))</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>expected_sex <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(point<span class="sc">$</span>sex))</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>expected_age <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(point[<span class="sc">!</span><span class="fu">is.na</span>(age), age]))</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>expected_len <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(point[<span class="sc">!</span><span class="fu">is.na</span>(len), len]))</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>missing_by_metric <span class="ot">&lt;-</span> point[, .(<span class="at">missing =</span> <span class="fu">list</span>(</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setdiff</span>(</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">CJ</span>(<span class="at">strata =</span> expected_strata, <span class="at">sex =</span> expected_sex),</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unique</span>(.SD),</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"sex"</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>)), by <span class="ot">=</span> .(metric), .SDcols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"sex"</span>)]</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>missing_age_by_metric <span class="ot">&lt;-</span> point[<span class="sc">!</span><span class="fu">is.na</span>(age), .(<span class="at">missing =</span> <span class="fu">list</span>(</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setdiff</span>(</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">CJ</span>(<span class="at">strata =</span> expected_strata, <span class="at">sex =</span> expected_sex, <span class="at">age =</span> expected_age),</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unique</span>(.SD),</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"sex"</span>,<span class="st">"age"</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>)), by <span class="ot">=</span> .(metric), .SDcols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"sex"</span>,<span class="st">"age"</span>)]</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>missing_len_by_metric <span class="ot">&lt;-</span> point[<span class="sc">!</span><span class="fu">is.na</span>(len), .(<span class="at">missing =</span> <span class="fu">list</span>(</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setdiff</span>(</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">CJ</span>(<span class="at">strata =</span> expected_strata, <span class="at">sex =</span> expected_sex, <span class="at">len =</span> expected_len),</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unique</span>(.SD),</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"sex"</span>,<span class="st">"len"</span>)</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>)), by <span class="ot">=</span> .(metric), .SDcols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"sex"</span>,<span class="st">"len"</span>)]</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="fu">list</span>(</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_point =</span> <span class="fu">nrow</span>(point),</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_boot =</span> <span class="fu">nrow</span>(boot),</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>  <span class="at">metrics =</span> <span class="fu">sort</span>(<span class="fu">unique</span>(point<span class="sc">$</span>metric)),</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>  <span class="at">catch_sum =</span> point[metric <span class="sc">==</span> <span class="st">"catch_at_age"</span>, <span class="fu">sum</span>(value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)],</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>  <span class="at">missing_by_metric =</span> missing_by_metric,</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>  <span class="at">missing_age_by_metric =</span> missing_age_by_metric,</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">missing_len_by_metric =</span> missing_len_by_metric</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="next-steps" class="level1" data-number="13">
+<h1 data-number="13"><span class="header-section-number">13</span> Next steps</h1>
+<ol type="1">
+<li>Implement <code>R/sampler_refactor.R</code> using data.table.</li>
+<li>Validate against existing ADMB outputs for 1–2 years.</li>
+<li>Add benchmark section (runtime, memory, row counts).</li>
+</ol>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

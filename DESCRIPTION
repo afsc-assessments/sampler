@@ -1,0 +1,12 @@
+Package: samplerrefactor
+Title: Refactor of sam.tpl to R
+Version: 0.1.0
+Authors@R: c(person("Jim", "Ianelli", role = c("aut", "cre"), email = "Jim.ianelli@noaa.gov"))
+Author: Jim Ianelli
+Maintainer: Jim Ianelli <Jim.ianelli@noaa.gov>
+Description: High-performance R implementation of the sampler workflow using data.table.
+License: Unlimited
+Encoding: UTF-8
+Imports:
+    data.table,
+    arrow

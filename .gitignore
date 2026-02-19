@@ -3,3 +3,8 @@
 .RData
 .Ruserdata
 .Rproj
+results/
+pkg/
+samplerrefactor_*.tar.gz
+index_files/
+*.Rcheck/
