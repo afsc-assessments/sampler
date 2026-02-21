@@ -4,6 +4,12 @@ suppressPackageStartupMessages({
   library(data.table)
 })
 
+#' Resolve the script directory
+#'
+#' Finds the current script directory using `--file` when available, falling
+#' back to frame metadata and then `getwd()`.
+#'
+#' @return Absolute path to the script directory as a character scalar.
 get_script_dir <- function() {
   args <- commandArgs(trailingOnly = FALSE)
   file_arg <- grep("^--file=", args, value = TRUE)
@@ -19,6 +25,12 @@ get_script_dir <- function() {
   normalizePath(getwd())
 }
 
+#' Parse common truthy/falsey strings to logical
+#'
+#' @param x Character-like scalar from CLI args.
+#' @param default Logical value returned when `x` is missing/empty.
+#'
+#' @return Logical scalar.
 as_bool <- function(x, default = FALSE) {
   if (is.null(x) || is.na(x) || !nzchar(x)) {
     return(default)
@@ -26,6 +38,11 @@ as_bool <- function(x, default = FALSE) {
   tolower(x) %in% c("1", "true", "t", "yes", "y")
 }
 
+#' Parse key-value CLI arguments
+#'
+#' @param args Character vector like `c("key=value", "other=1")`.
+#'
+#' @return Named list of parsed key-value strings.
 parse_cli_args <- function(args) {
   out <- list()
   if (length(args) == 0) {
@@ -45,12 +62,24 @@ parse_cli_args <- function(args) {
   out
 }
 
+#' Discover available sampler control years
+#'
+#' @param fishery_dir Directory containing `samYYYY.dat` files.
+#'
+#' @return Integer vector of discovered years in ascending order.
 discover_control_years <- function(fishery_dir) {
   files <- list.files(fishery_dir, pattern = "^sam[0-9]{4}\\.dat$", full.names = FALSE)
   years <- as.integer(sub("^sam([0-9]{4})\\.dat$", "\\1", files))
   sort(years[!is.na(years)])
 }
 
+#' Write `bs_setup.dat` bootstrap controls
+#'
+#' @param fishery_dir Directory where `bs_setup.dat` will be written.
+#' @param nbs Number of bootstrap replicates.
+#' @param levels Numeric vector of four sampling-level controls.
+#'
+#' @return Path to the written `bs_setup.dat` file.
 write_bs_setup <- function(fishery_dir, nbs, levels) {
   stopifnot(length(levels) == 4)
   path <- file.path(fishery_dir, "bs_setup.dat")
@@ -59,6 +88,15 @@ write_bs_setup <- function(fishery_dir, nbs, levels) {
   path
 }
 
+#' Run ADMB sampler for one control year
+#'
+#' @param year Integer year matching a `samYYYY.dat` file.
+#' @param fishery_dir Directory containing control/data files.
+#' @param sam_bin Path to ADMB `sam` executable.
+#' @param io Logical; if `TRUE`, pass `-nox -io`.
+#' @param verbose Logical; emit per-year status messages.
+#'
+#' @return Invisibly returns `TRUE` on success.
 run_sampler_year <- function(year, fishery_dir, sam_bin, io = FALSE, verbose = TRUE) {
   ctl <- sprintf("sam%d.dat", year)
   ctl_path <- file.path(fishery_dir, ctl)
@@ -90,6 +128,12 @@ run_sampler_year <- function(year, fishery_dir, sam_bin, io = FALSE, verbose = T
   invisible(TRUE)
 }
 
+#' Read one `Est_<year>.dat` output file
+#'
+#' @param year Integer year to read.
+#' @param fishery_dir Directory containing `results/`.
+#'
+#' @return `data.table` with estimate rows, or `NULL` if file is missing.
 read_estimates <- function(year, fishery_dir) {
   path <- file.path(fishery_dir, "results", sprintf("Est_%d.dat", year))
   if (!file.exists(path)) {
@@ -106,6 +150,14 @@ read_estimates <- function(year, fishery_dir) {
   dt[]
 }
 
+#' Summarize annual combined estimates
+#'
+#' Builds yearly totals and mean age from `type == "N"` at combined
+#' `stratum == 99`, including sex-specific totals.
+#'
+#' @param est_dt `data.table` of stacked `Est_<year>.dat` rows.
+#'
+#' @return `data.table` with one summary row per year.
 summarize_estimates <- function(est_dt) {
   if (is.null(est_dt) || nrow(est_dt) == 0) {
     return(data.table::data.table())
@@ -138,6 +190,23 @@ summarize_estimates <- function(est_dt) {
   out[]
 }
 
+#' Run consolidated ebswpSAM fishery workflow
+#'
+#' Executes ADMB runs over a year range (optional), then reads
+#' `results/Est_<year>.dat` files and writes a rolled-up summary CSV.
+#'
+#' @param start_year Optional integer start year; defaults to minimum control year.
+#' @param end_year Optional integer end year; defaults to maximum control year.
+#' @param run_sampler Logical; if `TRUE`, run ADMB before summarizing.
+#' @param nbs Integer bootstrap count for `bs_setup.dat`.
+#' @param levels Numeric length-4 vector for sampling controls in `bs_setup.dat`.
+#' @param io Logical; if `TRUE`, pass `-nox -io` to ADMB `sam`.
+#' @param fishery_dir Optional directory containing `samYYYY.dat`; defaults to `data/fishery` next to this script.
+#' @param sam_bin Optional path to ADMB `sam`; defaults to `../../src/sam` from this script.
+#' @param summary_csv Optional output path for summary CSV.
+#' @param verbose Logical; if `TRUE`, print progress messages.
+#'
+#' @return Invisibly returns a list with `years`, `summary_csv`, and `n_rows`.
 run_ebswp_fishery <- function(
   start_year = NULL,
   end_year = NULL,
