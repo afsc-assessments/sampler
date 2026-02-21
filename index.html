@@ -436,15 +436,15 @@ window.Quarto = {
 <p>The model composes age and length information from fishery and survey samples with standard multinomial-style proportions and bootstrap summaries.</p>
 <section id="length-frequency-proportions" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="length-frequency-proportions"><span class="header-section-number">6.1</span> Length-frequency proportions</h2>
-<p>For year (y), sex (s), and length bin (l):</p>
+<p>For year <span class="math inline">\(y\)</span>, sex <span class="math inline">\(s\)</span>, and length bin <span class="math inline">\(l\)</span>:</p>
 <p><span class="math display">\[
 p_{y,s,l} = \frac{n_{y,s,l}}{\sum_{l'} n_{y,s,l'}}
 \]</span></p>
-<p>where (n_{y,s,l}) is the sampled count at length.</p>
+<p>where <span class="math inline">\(n_{y,s,l}\)</span> is the sampled count at length.</p>
 </section>
 <section id="age-length-key-alk" class="level2" data-number="6.2">
 <h2 data-number="6.2" class="anchored" data-anchor-id="age-length-key-alk"><span class="header-section-number">6.2</span> Age-length key (ALK)</h2>
-<p>For age (a) and length bin (l):</p>
+<p>For age <span class="math inline">\(a\)</span> and length bin <span class="math inline">\(l\)</span>:</p>
 <p><span class="math display">\[
 P(a \mid l, y, s) = \frac{n_{y,s,a,l}}{\sum_{a'} n_{y,s,a',l}}
 \]</span></p>
@@ -452,7 +452,7 @@ P(a \mid l, y, s) = \frac{n_{y,s,a,l}}{\sum_{a'} n_{y,s,a',l}}
 </section>
 <section id="catch-at-length-and-catch-at-age" class="level2" data-number="6.3">
 <h2 data-number="6.3" class="anchored" data-anchor-id="catch-at-length-and-catch-at-age"><span class="header-section-number">6.3</span> Catch-at-length and catch-at-age</h2>
-<p>Given total catch in numbers (C_{y,s}):</p>
+<p>Given total catch in numbers <span class="math inline">\(C_{y,s}\)</span>:</p>
 <p><span class="math display">\[
 C_{y,s,l} = C_{y,s} \cdot p_{y,s,l}
 \]</span></p>
@@ -463,7 +463,7 @@ C_{y,s,a} = \sum_l C_{y,s,l} \cdot P(a \mid l, y, s)
 </section>
 <section id="mean-weight-at-age-and-mean-weight-at-length" class="level2" data-number="6.4">
 <h2 data-number="6.4" class="anchored" data-anchor-id="mean-weight-at-age-and-mean-weight-at-length"><span class="header-section-number">6.4</span> Mean weight-at-age and mean weight-at-length</h2>
-<p>For sampled weights (w_i):</p>
+<p>For sampled weights <span class="math inline">\(w_i\)</span>:</p>
 <p><span class="math display">\[
 \bar{w}_{y,s,a} = \frac{1}{N_{y,s,a}} \sum_{i=1}^{N_{y,s,a}} w_i
 \]</span></p>
@@ -473,7 +473,7 @@ C_{y,s,a} = \sum_l C_{y,s,l} \cdot P(a \mid l, y, s)
 </section>
 <section id="bootstrap-summary-statistics" class="level2" data-number="6.5">
 <h2 data-number="6.5" class="anchored" data-anchor-id="bootstrap-summary-statistics"><span class="header-section-number">6.5</span> Bootstrap summary statistics</h2>
-<p>From bootstrap replicates (^{(b)}), (b = 1,,B):</p>
+<p>From bootstrap replicates <span class="math inline">\(\theta^{(b)}\)</span>, <span class="math inline">\(b = 1,\dots,B\)</span>:</p>
 <p><span class="math display">\[
 \hat{\mu}_\theta = \frac{1}{B} \sum_{b=1}^{B} \theta^{(b)}
 \]</span></p>

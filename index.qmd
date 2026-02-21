@@ -200,17 +200,17 @@ The model composes age and length information from fishery and survey samples wi
 
 ## Length-frequency proportions
 
-For year \(y\), sex \(s\), and length bin \(l\):
+For year $y$, sex $s$, and length bin $l$:
 
 $$
 p_{y,s,l} = \frac{n_{y,s,l}}{\sum_{l'} n_{y,s,l'}}
 $$
 
-where \(n_{y,s,l}\) is the sampled count at length.
+where $n_{y,s,l}$ is the sampled count at length.
 
 ## Age-length key (ALK)
 
-For age \(a\) and length bin \(l\):
+For age $a$ and length bin $l$:
 
 $$
 P(a \mid l, y, s) = \frac{n_{y,s,a,l}}{\sum_{a'} n_{y,s,a',l}}
@@ -220,7 +220,7 @@ This maps observed length composition to age composition.
 
 ## Catch-at-length and catch-at-age
 
-Given total catch in numbers \(C_{y,s}\):
+Given total catch in numbers $C_{y,s}$:
 
 $$
 C_{y,s,l} = C_{y,s} \cdot p_{y,s,l}
@@ -234,7 +234,7 @@ $$
 
 ## Mean weight-at-age and mean weight-at-length
 
-For sampled weights \(w_i\):
+For sampled weights $w_i$:
 
 $$
 \bar{w}_{y,s,a} = \frac{1}{N_{y,s,a}} \sum_{i=1}^{N_{y,s,a}} w_i
@@ -246,7 +246,7 @@ $$
 
 ## Bootstrap summary statistics
 
-From bootstrap replicates (\theta^{(b)}\), (b = 1,\dots,B):
+From bootstrap replicates $\theta^{(b)}$, $b = 1,\dots,B$:
 
 $$
 \hat{\mu}_\theta = \frac{1}{B} \sum_{b=1}^{B} \theta^{(b)}
