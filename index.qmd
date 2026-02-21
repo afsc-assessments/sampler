@@ -194,6 +194,108 @@ R -q -e "source('../R/sampler_refactor.R'); run_sampler_refactor('sam2020.dat','
 `sam*.dat` usually stores `agefile` and `lenfile` as relative names (for example `age2020.dat`).
 Use the same working directory as those files (for example `example/`) when running.
 
+# `cases/ebswpSAM` Focus
+
+This directory contains the Eastern Bering Sea walleye pollock workflow, with two practical data layouts:
+
+1. Archived fishery inputs in `cases/ebswpSAM/data/fishery/` using `samYYYY.dat`, `ageYYYY.dat`, `lenYYYY.dat`.
+2. Generated working inputs expected by some scripts/Makefile in `cases/ebswpSAM/data/` using `sam_YYYY.dat`, `ageYYYY.dat`, `lenYYYY.dat`.
+
+## Recommended: archived fishery run (`data/fishery`)
+
+Run from the directory that contains the `samYYYY.dat` control files so relative `age/len` filenames resolve correctly.
+
+### ADMB run for one year
+
+```bash
+cd cases/ebswpSAM/data/fishery
+cat > bs_setup.dat <<'TXT'
+1
+1
+1
+1
+1
+TXT
+../../../src/sam -ind sam2024.dat
+```
+
+### R refactor run for one year
+
+```bash
+cd cases/ebswpSAM/data/fishery
+cat > bs_setup.dat <<'TXT'
+1000
+2
+2
+2
+2
+TXT
+R -q -e "source('../../../R/sampler_refactor.R'); run_sampler_refactor('sam2024.dat','bs_setup.dat','results','ebswp')"
+```
+
+## Alternate: generated-data run (`cases/ebswpSAM/Makefile`)
+
+`cases/ebswpSAM/Makefile` runs:
+
+```bash
+./sam -ind data/sam_<year>.dat
+```
+
+Example:
+
+```bash
+cd cases/ebswpSAM
+make yr=2024
+```
+
+Use this only when `data/sam_<year>.dat` exists (underscore form). Archived fishery controls are named `sam<year>.dat` (no underscore).
+
+## Quick commands (year ranges)
+
+Run a range of archived `data/fishery/samYYYY.dat` control files with ADMB:
+
+```bash
+cd cases/ebswpSAM/data/fishery
+cat > bs_setup.dat <<'TXT'
+1
+1
+1
+1
+1
+TXT
+for y in $(seq 1991 2024); do
+  ../../../src/sam -ind "sam${y}.dat"
+done
+```
+
+Run a range with the R refactor (writes one Parquet pair per year prefix):
+
+```bash
+cd cases/ebswpSAM/data/fishery
+cat > bs_setup.dat <<'TXT'
+1000
+2
+2
+2
+2
+TXT
+for y in $(seq 2020 2024); do
+  R -q -e "source('../../../R/sampler_refactor.R'); run_sampler_refactor('sam${y}.dat','bs_setup.dat','results','ebswp_${y}')"
+done
+```
+
+## Key ebswpSAM scripts
+
+- `cases/ebswpSAM/EBS_sampler2023.R`: end-to-end prep + diagnostics for recent years.
+- `cases/ebswpSAM/sampler.R`: defines `Sampler()` and `SetBS()` utilities used in case workflows.
+- `cases/ebswpSAM/ebs_survey.R`: survey-oriented conversion and sampler runs.
+- `cases/ebswpSAM/imported/poll_age.sql` and `cases/ebswpSAM/imported/poll_len.sql`: source SQL templates.
+
+## Known path caveats
+
+- Several legacy scripts in this case directory contain machine-specific `setwd()`/`source()` paths and may need local edits before execution.
+- Some scripts reference `sampleR/R/sampler_EBSwp.R`; verify that file exists in your local clone or update the `source()` target to the intended sampler helper.
+
 # Query-Based Data Preparation (Legacy)
 
 Legacy query scripts live in `R/`:
