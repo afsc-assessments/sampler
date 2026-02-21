@@ -159,9 +159,10 @@ window.Quarto = {
   <li><a href="#known-path-caveats" id="toc-known-path-caveats" class="nav-link" data-scroll-target="#known-path-caveats"><span class="header-section-number">7.5</span> Known path caveats</a></li>
   </ul></li>
   <li><a href="#query-based-data-preparation-legacy" id="toc-query-based-data-preparation-legacy" class="nav-link" data-scroll-target="#query-based-data-preparation-legacy"><span class="header-section-number">8</span> Query-Based Data Preparation (Legacy)</a></li>
-  <li><a href="#render-this-documentation" id="toc-render-this-documentation" class="nav-link" data-scroll-target="#render-this-documentation"><span class="header-section-number">9</span> Render This Documentation</a></li>
-  <li><a href="#push-to-github" id="toc-push-to-github" class="nav-link" data-scroll-target="#push-to-github"><span class="header-section-number">10</span> Push to GitHub</a></li>
-  <li><a href="#troubleshooting" id="toc-troubleshooting" class="nav-link" data-scroll-target="#troubleshooting"><span class="header-section-number">11</span> Troubleshooting</a></li>
+  <li><a href="#appendix-ebswpsam-fishery-driver-api-roxygen" id="toc-appendix-ebswpsam-fishery-driver-api-roxygen" class="nav-link" data-scroll-target="#appendix-ebswpsam-fishery-driver-api-roxygen"><span class="header-section-number">9</span> Appendix: ebswpSAM Fishery Driver API (Roxygen)</a></li>
+  <li><a href="#render-this-documentation" id="toc-render-this-documentation" class="nav-link" data-scroll-target="#render-this-documentation"><span class="header-section-number">10</span> Render This Documentation</a></li>
+  <li><a href="#push-to-github" id="toc-push-to-github" class="nav-link" data-scroll-target="#push-to-github"><span class="header-section-number">11</span> Push to GitHub</a></li>
+  <li><a href="#troubleshooting" id="toc-troubleshooting" class="nav-link" data-scroll-target="#troubleshooting"><span class="header-section-number">12</span> Troubleshooting</a></li>
   </ul>
 </nav>
 </div>
@@ -640,22 +641,99 @@ N_{y,99,99,a} = \sum_k \sum_s N_{y,k,s,a}
 </ul>
 <p>These use AFSC/AKFIN ODBC connections and keyring credentials to generate <code>age*.dat</code>, <code>len*.dat</code>, and <code>sam*.dat</code> files.</p>
 </section>
-<section id="render-this-documentation" class="level1" data-number="9">
-<h1 data-number="9"><span class="header-section-number">9</span> Render This Documentation</h1>
+<section id="appendix-ebswpsam-fishery-driver-api-roxygen" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Appendix: ebswpSAM Fishery Driver API (Roxygen)</h1>
+<p>Source: <code>cases/ebswpSAM/EBS_sampler_fishery.R</code></p>
+<p>The table below is a concise rendering of the roxygen function documentation in the consolidated driver.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Purpose</th>
+<th>Key Parameters</th>
+<th>Return</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>get_script_dir()</code></td>
+<td>Resolve script directory for CLI or sourced execution.</td>
+<td>none</td>
+<td>Absolute directory path (<code>character</code>).</td>
+</tr>
+<tr class="even">
+<td><code>as_bool(x, default = FALSE)</code></td>
+<td>Parse truthy/falsey CLI text to logical.</td>
+<td><code>x</code>, <code>default</code></td>
+<td>Logical scalar.</td>
+</tr>
+<tr class="odd">
+<td><code>parse_cli_args(args)</code></td>
+<td>Parse <code>key=value</code> CLI tokens into a named list.</td>
+<td><code>args</code></td>
+<td>Named list of string values.</td>
+</tr>
+<tr class="even">
+<td><code>discover_control_years(fishery_dir)</code></td>
+<td>Detect available years from <code>samYYYY.dat</code> controls.</td>
+<td><code>fishery_dir</code></td>
+<td>Sorted integer year vector.</td>
+</tr>
+<tr class="odd">
+<td><code>write_bs_setup(fishery_dir, nbs, levels)</code></td>
+<td>Write <code>bs_setup.dat</code> controls for ADMB.</td>
+<td><code>fishery_dir</code>, <code>nbs</code>, <code>levels</code> (length 4)</td>
+<td>Path to written file.</td>
+</tr>
+<tr class="even">
+<td><code>run_sampler_year(year, fishery_dir, sam_bin, io = FALSE, verbose = TRUE)</code></td>
+<td>Run ADMB <code>sam</code> for one control year.</td>
+<td><code>year</code>, <code>fishery_dir</code>, <code>sam_bin</code>, <code>io</code>, <code>verbose</code></td>
+<td>Invisibly <code>TRUE</code> on success.</td>
+</tr>
+<tr class="odd">
+<td><code>read_estimates(year, fishery_dir)</code></td>
+<td>Read one <code>results/Est_&lt;year&gt;.dat</code> file.</td>
+<td><code>year</code>, <code>fishery_dir</code></td>
+<td><code>data.table</code> or <code>NULL</code> if missing.</td>
+</tr>
+<tr class="even">
+<td><code>summarize_estimates(est_dt)</code></td>
+<td>Roll up combined (<code>stratum=99</code>) annual numbers and mean age.</td>
+<td><code>est_dt</code></td>
+<td>Yearly summary <code>data.table</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>run_ebswp_fishery(...)</code></td>
+<td>Main consolidated workflow for year-range run + summary.</td>
+<td><code>start_year</code>, <code>end_year</code>, <code>run_sampler</code>, <code>nbs</code>, <code>levels</code>, <code>io</code>, <code>fishery_dir</code>, <code>sam_bin</code>, <code>summary_csv</code>, <code>verbose</code></td>
+<td>Invisible list: <code>years</code>, <code>summary_csv</code>, <code>n_rows</code>.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="render-this-documentation" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Render This Documentation</h1>
 <p>From repository root:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render index.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This produces <code>index.html</code> in the repository root.</p>
 </section>
-<section id="push-to-github" class="level1" data-number="10">
-<h1 data-number="10"><span class="header-section-number">10</span> Push to GitHub</h1>
+<section id="push-to-github" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> Push to GitHub</h1>
 <p>Typical update sequence:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add index.qmd index.html</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">"Update sampler documentation"</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin <span class="op">&lt;</span>branch<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If your repository uses GitHub Pages from root or <code>gh-pages</code>, commit <code>index.html</code> accordingly.</p>
 </section>
-<section id="troubleshooting" class="level1" data-number="11">
-<h1 data-number="11"><span class="header-section-number">11</span> Troubleshooting</h1>
+<section id="troubleshooting" class="level1" data-number="12">
+<h1 data-number="12"><span class="header-section-number">12</span> Troubleshooting</h1>
 <ul>
 <li><code>Package 'arrow' is required for Parquet output.</code>
 <ul>

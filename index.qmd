@@ -445,6 +445,24 @@ Legacy query scripts live in `R/`:
 
 These use AFSC/AKFIN ODBC connections and keyring credentials to generate `age*.dat`, `len*.dat`, and `sam*.dat` files.
 
+# Appendix: ebswpSAM Fishery Driver API (Roxygen)
+
+Source: `cases/ebswpSAM/EBS_sampler_fishery.R`
+
+The table below is a concise rendering of the roxygen function documentation in the consolidated driver.
+
+| Function | Purpose | Key Parameters | Return |
+|---|---|---|---|
+| `get_script_dir()` | Resolve script directory for CLI or sourced execution. | none | Absolute directory path (`character`). |
+| `as_bool(x, default = FALSE)` | Parse truthy/falsey CLI text to logical. | `x`, `default` | Logical scalar. |
+| `parse_cli_args(args)` | Parse `key=value` CLI tokens into a named list. | `args` | Named list of string values. |
+| `discover_control_years(fishery_dir)` | Detect available years from `samYYYY.dat` controls. | `fishery_dir` | Sorted integer year vector. |
+| `write_bs_setup(fishery_dir, nbs, levels)` | Write `bs_setup.dat` controls for ADMB. | `fishery_dir`, `nbs`, `levels` (length 4) | Path to written file. |
+| `run_sampler_year(year, fishery_dir, sam_bin, io = FALSE, verbose = TRUE)` | Run ADMB `sam` for one control year. | `year`, `fishery_dir`, `sam_bin`, `io`, `verbose` | Invisibly `TRUE` on success. |
+| `read_estimates(year, fishery_dir)` | Read one `results/Est_<year>.dat` file. | `year`, `fishery_dir` | `data.table` or `NULL` if missing. |
+| `summarize_estimates(est_dt)` | Roll up combined (`stratum=99`) annual numbers and mean age. | `est_dt` | Yearly summary `data.table`. |
+| `run_ebswp_fishery(...)` | Main consolidated workflow for year-range run + summary. | `start_year`, `end_year`, `run_sampler`, `nbs`, `levels`, `io`, `fishery_dir`, `sam_bin`, `summary_csv`, `verbose` | Invisible list: `years`, `summary_csv`, `n_rows`. |
+
 # Render This Documentation
 
 From repository root:
