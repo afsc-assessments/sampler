@@ -72,6 +72,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="index_files/libs/bootstrap/bootstrap-d6a003b94517c951b2d65075d42fb01b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -107,22 +136,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#r-outputs" id="toc-r-outputs" class="nav-link" data-scroll-target="#r-outputs"><span class="header-section-number">5.4</span> R Outputs</a></li>
   <li><a href="#notes-on-paths" id="toc-notes-on-paths" class="nav-link" data-scroll-target="#notes-on-paths"><span class="header-section-number">5.5</span> Notes on Paths</a></li>
   </ul></li>
-  <li><a href="#casesebswpsam-focus" id="toc-casesebswpsam-focus" class="nav-link" data-scroll-target="#casesebswpsam-focus"><span class="header-section-number">6</span> <code>cases/ebswpSAM</code> Focus</a>
+  <li><a href="#core-equations" id="toc-core-equations" class="nav-link" data-scroll-target="#core-equations"><span class="header-section-number">6</span> Core Equations</a>
   <ul class="collapse">
-  <li><a href="#recommended-archived-fishery-run-datafishery" id="toc-recommended-archived-fishery-run-datafishery" class="nav-link" data-scroll-target="#recommended-archived-fishery-run-datafishery"><span class="header-section-number">6.1</span> Recommended: archived fishery run (<code>data/fishery</code>)</a>
+  <li><a href="#length-frequency-proportions" id="toc-length-frequency-proportions" class="nav-link" data-scroll-target="#length-frequency-proportions"><span class="header-section-number">6.1</span> Length-frequency proportions</a></li>
+  <li><a href="#age-length-key-alk" id="toc-age-length-key-alk" class="nav-link" data-scroll-target="#age-length-key-alk"><span class="header-section-number">6.2</span> Age-length key (ALK)</a></li>
+  <li><a href="#catch-at-length-and-catch-at-age" id="toc-catch-at-length-and-catch-at-age" class="nav-link" data-scroll-target="#catch-at-length-and-catch-at-age"><span class="header-section-number">6.3</span> Catch-at-length and catch-at-age</a></li>
+  <li><a href="#mean-weight-at-age-and-mean-weight-at-length" id="toc-mean-weight-at-age-and-mean-weight-at-length" class="nav-link" data-scroll-target="#mean-weight-at-age-and-mean-weight-at-length"><span class="header-section-number">6.4</span> Mean weight-at-age and mean weight-at-length</a></li>
+  <li><a href="#bootstrap-summary-statistics" id="toc-bootstrap-summary-statistics" class="nav-link" data-scroll-target="#bootstrap-summary-statistics"><span class="header-section-number">6.5</span> Bootstrap summary statistics</a></li>
+  </ul></li>
+  <li><a href="#casesebswpsam-focus" id="toc-casesebswpsam-focus" class="nav-link" data-scroll-target="#casesebswpsam-focus"><span class="header-section-number">7</span> <code>cases/ebswpSAM</code> Focus</a>
   <ul class="collapse">
-  <li><a href="#admb-run-for-one-year" id="toc-admb-run-for-one-year" class="nav-link" data-scroll-target="#admb-run-for-one-year"><span class="header-section-number">6.1.1</span> ADMB run for one year</a></li>
-  <li><a href="#r-refactor-run-for-one-year" id="toc-r-refactor-run-for-one-year" class="nav-link" data-scroll-target="#r-refactor-run-for-one-year"><span class="header-section-number">6.1.2</span> R refactor run for one year</a></li>
+  <li><a href="#recommended-archived-fishery-run-datafishery" id="toc-recommended-archived-fishery-run-datafishery" class="nav-link" data-scroll-target="#recommended-archived-fishery-run-datafishery"><span class="header-section-number">7.1</span> Recommended: archived fishery run (<code>data/fishery</code>)</a>
+  <ul class="collapse">
+  <li><a href="#admb-run-for-one-year" id="toc-admb-run-for-one-year" class="nav-link" data-scroll-target="#admb-run-for-one-year"><span class="header-section-number">7.1.1</span> ADMB run for one year</a></li>
+  <li><a href="#r-refactor-run-for-one-year" id="toc-r-refactor-run-for-one-year" class="nav-link" data-scroll-target="#r-refactor-run-for-one-year"><span class="header-section-number">7.1.2</span> R refactor run for one year</a></li>
   </ul></li>
-  <li><a href="#alternate-generated-data-run-casesebswpsammakefile" id="toc-alternate-generated-data-run-casesebswpsammakefile" class="nav-link" data-scroll-target="#alternate-generated-data-run-casesebswpsammakefile"><span class="header-section-number">6.2</span> Alternate: generated-data run (<code>cases/ebswpSAM/Makefile</code>)</a></li>
-  <li><a href="#quick-commands-year-ranges" id="toc-quick-commands-year-ranges" class="nav-link" data-scroll-target="#quick-commands-year-ranges"><span class="header-section-number">6.3</span> Quick commands (year ranges)</a></li>
-  <li><a href="#key-ebswpsam-scripts" id="toc-key-ebswpsam-scripts" class="nav-link" data-scroll-target="#key-ebswpsam-scripts"><span class="header-section-number">6.4</span> Key ebswpSAM scripts</a></li>
-  <li><a href="#known-path-caveats" id="toc-known-path-caveats" class="nav-link" data-scroll-target="#known-path-caveats"><span class="header-section-number">6.5</span> Known path caveats</a></li>
+  <li><a href="#alternate-generated-data-run-casesebswpsammakefile" id="toc-alternate-generated-data-run-casesebswpsammakefile" class="nav-link" data-scroll-target="#alternate-generated-data-run-casesebswpsammakefile"><span class="header-section-number">7.2</span> Alternate: generated-data run (<code>cases/ebswpSAM/Makefile</code>)</a></li>
+  <li><a href="#quick-commands-year-ranges" id="toc-quick-commands-year-ranges" class="nav-link" data-scroll-target="#quick-commands-year-ranges"><span class="header-section-number">7.3</span> Quick commands (year ranges)</a></li>
+  <li><a href="#key-ebswpsam-scripts" id="toc-key-ebswpsam-scripts" class="nav-link" data-scroll-target="#key-ebswpsam-scripts"><span class="header-section-number">7.4</span> Key ebswpSAM scripts</a></li>
+  <li><a href="#known-path-caveats" id="toc-known-path-caveats" class="nav-link" data-scroll-target="#known-path-caveats"><span class="header-section-number">7.5</span> Known path caveats</a></li>
   </ul></li>
-  <li><a href="#query-based-data-preparation-legacy" id="toc-query-based-data-preparation-legacy" class="nav-link" data-scroll-target="#query-based-data-preparation-legacy"><span class="header-section-number">7</span> Query-Based Data Preparation (Legacy)</a></li>
-  <li><a href="#render-this-documentation" id="toc-render-this-documentation" class="nav-link" data-scroll-target="#render-this-documentation"><span class="header-section-number">8</span> Render This Documentation</a></li>
-  <li><a href="#push-to-github" id="toc-push-to-github" class="nav-link" data-scroll-target="#push-to-github"><span class="header-section-number">9</span> Push to GitHub</a></li>
-  <li><a href="#troubleshooting" id="toc-troubleshooting" class="nav-link" data-scroll-target="#troubleshooting"><span class="header-section-number">10</span> Troubleshooting</a></li>
+  <li><a href="#query-based-data-preparation-legacy" id="toc-query-based-data-preparation-legacy" class="nav-link" data-scroll-target="#query-based-data-preparation-legacy"><span class="header-section-number">8</span> Query-Based Data Preparation (Legacy)</a></li>
+  <li><a href="#render-this-documentation" id="toc-render-this-documentation" class="nav-link" data-scroll-target="#render-this-documentation"><span class="header-section-number">9</span> Render This Documentation</a></li>
+  <li><a href="#push-to-github" id="toc-push-to-github" class="nav-link" data-scroll-target="#push-to-github"><span class="header-section-number">10</span> Push to GitHub</a></li>
+  <li><a href="#troubleshooting" id="toc-troubleshooting" class="nav-link" data-scroll-target="#troubleshooting"><span class="header-section-number">11</span> Troubleshooting</a></li>
   </ul>
 </nav>
 </div>
@@ -394,18 +431,72 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><code>sam*.dat</code> usually stores <code>agefile</code> and <code>lenfile</code> as relative names (for example <code>age2020.dat</code>). Use the same working directory as those files (for example <code>example/</code>) when running.</p>
 </section>
 </section>
-<section id="casesebswpsam-focus" class="level1" data-number="6">
-<h1 data-number="6"><span class="header-section-number">6</span> <code>cases/ebswpSAM</code> Focus</h1>
+<section id="core-equations" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Core Equations</h1>
+<p>The model composes age and length information from fishery and survey samples with standard multinomial-style proportions and bootstrap summaries.</p>
+<section id="length-frequency-proportions" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="length-frequency-proportions"><span class="header-section-number">6.1</span> Length-frequency proportions</h2>
+<p>For year (y), sex (s), and length bin (l):</p>
+<p><span class="math display">\[
+p_{y,s,l} = \frac{n_{y,s,l}}{\sum_{l'} n_{y,s,l'}}
+\]</span></p>
+<p>where (n_{y,s,l}) is the sampled count at length.</p>
+</section>
+<section id="age-length-key-alk" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="age-length-key-alk"><span class="header-section-number">6.2</span> Age-length key (ALK)</h2>
+<p>For age (a) and length bin (l):</p>
+<p><span class="math display">\[
+P(a \mid l, y, s) = \frac{n_{y,s,a,l}}{\sum_{a'} n_{y,s,a',l}}
+\]</span></p>
+<p>This maps observed length composition to age composition.</p>
+</section>
+<section id="catch-at-length-and-catch-at-age" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="catch-at-length-and-catch-at-age"><span class="header-section-number">6.3</span> Catch-at-length and catch-at-age</h2>
+<p>Given total catch in numbers (C_{y,s}):</p>
+<p><span class="math display">\[
+C_{y,s,l} = C_{y,s} \cdot p_{y,s,l}
+\]</span></p>
+<p>and catch-at-age is obtained by marginalizing over length:</p>
+<p><span class="math display">\[
+C_{y,s,a} = \sum_l C_{y,s,l} \cdot P(a \mid l, y, s)
+\]</span></p>
+</section>
+<section id="mean-weight-at-age-and-mean-weight-at-length" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="mean-weight-at-age-and-mean-weight-at-length"><span class="header-section-number">6.4</span> Mean weight-at-age and mean weight-at-length</h2>
+<p>For sampled weights (w_i):</p>
+<p><span class="math display">\[
+\bar{w}_{y,s,a} = \frac{1}{N_{y,s,a}} \sum_{i=1}^{N_{y,s,a}} w_i
+\]</span></p>
+<p><span class="math display">\[
+\bar{w}_{y,s,l} = \frac{1}{N_{y,s,l}} \sum_{i=1}^{N_{y,s,l}} w_i
+\]</span></p>
+</section>
+<section id="bootstrap-summary-statistics" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="bootstrap-summary-statistics"><span class="header-section-number">6.5</span> Bootstrap summary statistics</h2>
+<p>From bootstrap replicates (^{(b)}), (b = 1,,B):</p>
+<p><span class="math display">\[
+\hat{\mu}_\theta = \frac{1}{B} \sum_{b=1}^{B} \theta^{(b)}
+\]</span></p>
+<p><span class="math display">\[
+\widehat{\mathrm{sd}}(\theta) = \sqrt{\frac{1}{B-1} \sum_{b=1}^{B} \left(\theta^{(b)} - \hat{\mu}_\theta\right)^2}
+\]</span></p>
+<p><span class="math display">\[
+\mathrm{CV}(\theta) = \frac{\widehat{\mathrm{sd}}(\theta)}{\hat{\mu}_\theta}
+\]</span></p>
+</section>
+</section>
+<section id="casesebswpsam-focus" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> <code>cases/ebswpSAM</code> Focus</h1>
 <p>This directory contains the Eastern Bering Sea walleye pollock workflow, with two practical data layouts:</p>
 <ol type="1">
 <li>Archived fishery inputs in <code>cases/ebswpSAM/data/fishery/</code> using <code>samYYYY.dat</code>, <code>ageYYYY.dat</code>, <code>lenYYYY.dat</code>.</li>
 <li>Generated working inputs expected by some scripts/Makefile in <code>cases/ebswpSAM/data/</code> using <code>sam_YYYY.dat</code>, <code>ageYYYY.dat</code>, <code>lenYYYY.dat</code>.</li>
 </ol>
-<section id="recommended-archived-fishery-run-datafishery" class="level2" data-number="6.1">
-<h2 data-number="6.1" class="anchored" data-anchor-id="recommended-archived-fishery-run-datafishery"><span class="header-section-number">6.1</span> Recommended: archived fishery run (<code>data/fishery</code>)</h2>
+<section id="recommended-archived-fishery-run-datafishery" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="recommended-archived-fishery-run-datafishery"><span class="header-section-number">7.1</span> Recommended: archived fishery run (<code>data/fishery</code>)</h2>
 <p>Run from the directory that contains the <code>samYYYY.dat</code> control files so relative <code>age/len</code> filenames resolve correctly.</p>
-<section id="admb-run-for-one-year" class="level3" data-number="6.1.1">
-<h3 data-number="6.1.1" class="anchored" data-anchor-id="admb-run-for-one-year"><span class="header-section-number">6.1.1</span> ADMB run for one year</h3>
+<section id="admb-run-for-one-year" class="level3" data-number="7.1.1">
+<h3 data-number="7.1.1" class="anchored" data-anchor-id="admb-run-for-one-year"><span class="header-section-number">7.1.1</span> ADMB run for one year</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM/data/fishery</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> bs_setup.dat <span class="op">&lt;&lt;'TXT'</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
@@ -416,8 +507,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="op">TXT</span></span>
 <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="ex">../../../src/sam</span> <span class="at">-ind</span> sam2024.dat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="r-refactor-run-for-one-year" class="level3" data-number="6.1.2">
-<h3 data-number="6.1.2" class="anchored" data-anchor-id="r-refactor-run-for-one-year"><span class="header-section-number">6.1.2</span> R refactor run for one year</h3>
+<section id="r-refactor-run-for-one-year" class="level3" data-number="7.1.2">
+<h3 data-number="7.1.2" class="anchored" data-anchor-id="r-refactor-run-for-one-year"><span class="header-section-number">7.1.2</span> R refactor run for one year</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM/data/fishery</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> bs_setup.dat <span class="op">&lt;&lt;'TXT'</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="st">1000</span></span>
@@ -429,8 +520,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> <span class="at">-q</span> <span class="at">-e</span> <span class="st">"source('../../../R/sampler_refactor.R'); run_sampler_refactor('sam2024.dat','bs_setup.dat','results','ebswp')"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
-<section id="alternate-generated-data-run-casesebswpsammakefile" class="level2" data-number="6.2">
-<h2 data-number="6.2" class="anchored" data-anchor-id="alternate-generated-data-run-casesebswpsammakefile"><span class="header-section-number">6.2</span> Alternate: generated-data run (<code>cases/ebswpSAM/Makefile</code>)</h2>
+<section id="alternate-generated-data-run-casesebswpsammakefile" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="alternate-generated-data-run-casesebswpsammakefile"><span class="header-section-number">7.2</span> Alternate: generated-data run (<code>cases/ebswpSAM/Makefile</code>)</h2>
 <p><code>cases/ebswpSAM/Makefile</code> runs:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./sam</span> <span class="at">-ind</span> data/sam_<span class="op">&lt;</span>year<span class="op">&gt;</span>.dat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Example:</p>
@@ -438,8 +529,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> yr=2024</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Use this only when <code>data/sam_&lt;year&gt;.dat</code> exists (underscore form). Archived fishery controls are named <code>sam&lt;year&gt;.dat</code> (no underscore).</p>
 </section>
-<section id="quick-commands-year-ranges" class="level2" data-number="6.3">
-<h2 data-number="6.3" class="anchored" data-anchor-id="quick-commands-year-ranges"><span class="header-section-number">6.3</span> Quick commands (year ranges)</h2>
+<section id="quick-commands-year-ranges" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="quick-commands-year-ranges"><span class="header-section-number">7.3</span> Quick commands (year ranges)</h2>
 <p>Run a range of archived <code>data/fishery/samYYYY.dat</code> control files with ADMB:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM/data/fishery</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> bs_setup.dat <span class="op">&lt;&lt;'TXT'</span></span>
@@ -465,8 +556,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="ex">R</span> <span class="at">-q</span> <span class="at">-e</span> <span class="st">"source('../../../R/sampler_refactor.R'); run_sampler_refactor('sam</span><span class="va">${y}</span><span class="st">.dat','bs_setup.dat','results','ebswp_</span><span class="va">${y}</span><span class="st">')"</span></span>
 <span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="key-ebswpsam-scripts" class="level2" data-number="6.4">
-<h2 data-number="6.4" class="anchored" data-anchor-id="key-ebswpsam-scripts"><span class="header-section-number">6.4</span> Key ebswpSAM scripts</h2>
+<section id="key-ebswpsam-scripts" class="level2" data-number="7.4">
+<h2 data-number="7.4" class="anchored" data-anchor-id="key-ebswpsam-scripts"><span class="header-section-number">7.4</span> Key ebswpSAM scripts</h2>
 <ul>
 <li><code>cases/ebswpSAM/EBS_sampler2023.R</code>: end-to-end prep + diagnostics for recent years.</li>
 <li><code>cases/ebswpSAM/sampler.R</code>: defines <code>Sampler()</code> and <code>SetBS()</code> utilities used in case workflows.</li>
@@ -474,16 +565,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>cases/ebswpSAM/imported/poll_age.sql</code> and <code>cases/ebswpSAM/imported/poll_len.sql</code>: source SQL templates.</li>
 </ul>
 </section>
-<section id="known-path-caveats" class="level2" data-number="6.5">
-<h2 data-number="6.5" class="anchored" data-anchor-id="known-path-caveats"><span class="header-section-number">6.5</span> Known path caveats</h2>
+<section id="known-path-caveats" class="level2" data-number="7.5">
+<h2 data-number="7.5" class="anchored" data-anchor-id="known-path-caveats"><span class="header-section-number">7.5</span> Known path caveats</h2>
 <ul>
 <li>Several legacy scripts in this case directory contain machine-specific <code>setwd()</code>/<code>source()</code> paths and may need local edits before execution.</li>
 <li>Some scripts reference <code>sampleR/R/sampler_EBSwp.R</code>; verify that file exists in your local clone or update the <code>source()</code> target to the intended sampler helper.</li>
 </ul>
 </section>
 </section>
-<section id="query-based-data-preparation-legacy" class="level1" data-number="7">
-<h1 data-number="7"><span class="header-section-number">7</span> Query-Based Data Preparation (Legacy)</h1>
+<section id="query-based-data-preparation-legacy" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Query-Based Data Preparation (Legacy)</h1>
 <p>Legacy query scripts live in <code>R/</code>:</p>
 <ul>
 <li><code>R/CallQueriesForSamplerData.R</code></li>
@@ -493,22 +584,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ul>
 <p>These use AFSC/AKFIN ODBC connections and keyring credentials to generate <code>age*.dat</code>, <code>len*.dat</code>, and <code>sam*.dat</code> files.</p>
 </section>
-<section id="render-this-documentation" class="level1" data-number="8">
-<h1 data-number="8"><span class="header-section-number">8</span> Render This Documentation</h1>
+<section id="render-this-documentation" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Render This Documentation</h1>
 <p>From repository root:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render index.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This produces <code>index.html</code> in the repository root.</p>
 </section>
-<section id="push-to-github" class="level1" data-number="9">
-<h1 data-number="9"><span class="header-section-number">9</span> Push to GitHub</h1>
+<section id="push-to-github" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Push to GitHub</h1>
 <p>Typical update sequence:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add index.qmd index.html</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">"Update sampler documentation"</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin <span class="op">&lt;</span>branch<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If your repository uses GitHub Pages from root or <code>gh-pages</code>, commit <code>index.html</code> accordingly.</p>
 </section>
-<section id="troubleshooting" class="level1" data-number="10">
-<h1 data-number="10"><span class="header-section-number">10</span> Troubleshooting</h1>
+<section id="troubleshooting" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> Troubleshooting</h1>
 <ul>
 <li><code>Package 'arrow' is required for Parquet output.</code>
 <ul>
