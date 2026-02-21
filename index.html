@@ -2,13 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.27">
+<meta name="generator" content="quarto-1.8.26">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jim Ianelli">
 
-<title>Sampler refactor plan (sam.tpl → R)</title>
+<title>Sampler Documentation</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -67,7 +67,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
 <script src="index_files/libs/quarto-html/anchor.min.js"></script>
 <link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="index_files/libs/bootstrap/bootstrap-d6a003b94517c951b2d65075d42fb01b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
@@ -83,19 +83,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#scope-and-constraints" id="toc-scope-and-constraints" class="nav-link active" data-scroll-target="#scope-and-constraints"><span class="header-section-number">1</span> Scope and constraints</a></li>
-  <li><a href="#deliverables" id="toc-deliverables" class="nav-link" data-scroll-target="#deliverables"><span class="header-section-number">2</span> Deliverables</a></li>
-  <li><a href="#highlevel-pipeline" id="toc-highlevel-pipeline" class="nav-link" data-scroll-target="#highlevel-pipeline"><span class="header-section-number">3</span> High‑level pipeline</a></li>
-  <li><a href="#data-structures-tidy" id="toc-data-structures-tidy" class="nav-link" data-scroll-target="#data-structures-tidy"><span class="header-section-number">4</span> Data structures (tidy)</a></li>
-  <li><a href="#performance-approach" id="toc-performance-approach" class="nav-link" data-scroll-target="#performance-approach"><span class="header-section-number">5</span> Performance approach</a></li>
-  <li><a href="#algorithm-mapping-sam.tpl-r" id="toc-algorithm-mapping-sam.tpl-r" class="nav-link" data-scroll-target="#algorithm-mapping-sam.tpl-r"><span class="header-section-number">6</span> Algorithm mapping (sam.tpl → R)</a></li>
-  <li><a href="#proposed-r-function-skeleton" id="toc-proposed-r-function-skeleton" class="nav-link" data-scroll-target="#proposed-r-function-skeleton"><span class="header-section-number">7</span> Proposed R function skeleton</a></li>
-  <li><a href="#output-specification" id="toc-output-specification" class="nav-link" data-scroll-target="#output-specification"><span class="header-section-number">8</span> Output specification</a></li>
-  <li><a href="#benchmark-plan" id="toc-benchmark-plan" class="nav-link" data-scroll-target="#benchmark-plan"><span class="header-section-number">9</span> Benchmark plan</a></li>
-  <li><a href="#usage" id="toc-usage" class="nav-link" data-scroll-target="#usage"><span class="header-section-number">10</span> Usage</a></li>
-  <li><a href="#packaging" id="toc-packaging" class="nav-link" data-scroll-target="#packaging"><span class="header-section-number">11</span> Packaging</a></li>
-  <li><a href="#minimal-example-dataset" id="toc-minimal-example-dataset" class="nav-link" data-scroll-target="#minimal-example-dataset"><span class="header-section-number">12</span> Minimal example dataset</a></li>
-  <li><a href="#next-steps" id="toc-next-steps" class="nav-link" data-scroll-target="#next-steps"><span class="header-section-number">13</span> Next steps</a></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview"><span class="header-section-number">1</span> Overview</a></li>
+  <li><a href="#repository-map" id="toc-repository-map" class="nav-link" data-scroll-target="#repository-map"><span class="header-section-number">2</span> Repository Map</a></li>
+  <li><a href="#input-file-formats" id="toc-input-file-formats" class="nav-link" data-scroll-target="#input-file-formats"><span class="header-section-number">3</span> Input File Formats</a>
+  <ul class="collapse">
+  <li><a href="#control-file-sam.dat" id="toc-control-file-sam.dat" class="nav-link" data-scroll-target="#control-file-sam.dat"><span class="header-section-number">3.1</span> Control File (<code>sam*.dat</code>)</a></li>
+  <li><a href="#age-file-age.dat" id="toc-age-file-age.dat" class="nav-link" data-scroll-target="#age-file-age.dat"><span class="header-section-number">3.2</span> Age File (<code>age*.dat</code>)</a></li>
+  <li><a href="#length-file-len.dat" id="toc-length-file-len.dat" class="nav-link" data-scroll-target="#length-file-len.dat"><span class="header-section-number">3.3</span> Length File (<code>len*.dat</code>)</a></li>
+  <li><a href="#bootstrap-setup-bs_setup.dat" id="toc-bootstrap-setup-bs_setup.dat" class="nav-link" data-scroll-target="#bootstrap-setup-bs_setup.dat"><span class="header-section-number">3.4</span> Bootstrap Setup (<code>bs_setup.dat</code>)</a></li>
+  </ul></li>
+  <li><a href="#admb-workflow" id="toc-admb-workflow" class="nav-link" data-scroll-target="#admb-workflow"><span class="header-section-number">4</span> ADMB Workflow</a>
+  <ul class="collapse">
+  <li><a href="#build" id="toc-build" class="nav-link" data-scroll-target="#build"><span class="header-section-number">4.1</span> Build</a></li>
+  <li><a href="#run" id="toc-run" class="nav-link" data-scroll-target="#run"><span class="header-section-number">4.2</span> Run</a></li>
+  <li><a href="#admb-runtime-options" id="toc-admb-runtime-options" class="nav-link" data-scroll-target="#admb-runtime-options"><span class="header-section-number">4.3</span> ADMB Runtime Options</a></li>
+  <li><a href="#admb-outputs" id="toc-admb-outputs" class="nav-link" data-scroll-target="#admb-outputs"><span class="header-section-number">4.4</span> ADMB Outputs</a></li>
+  </ul></li>
+  <li><a href="#r-refactor-workflow" id="toc-r-refactor-workflow" class="nav-link" data-scroll-target="#r-refactor-workflow"><span class="header-section-number">5</span> R Refactor Workflow</a>
+  <ul class="collapse">
+  <li><a href="#prerequisites" id="toc-prerequisites" class="nav-link" data-scroll-target="#prerequisites"><span class="header-section-number">5.1</span> Prerequisites</a></li>
+  <li><a href="#recommended-run-commands" id="toc-recommended-run-commands" class="nav-link" data-scroll-target="#recommended-run-commands"><span class="header-section-number">5.2</span> Recommended Run Commands</a></li>
+  <li><a href="#function-arguments" id="toc-function-arguments" class="nav-link" data-scroll-target="#function-arguments"><span class="header-section-number">5.3</span> Function Arguments</a></li>
+  <li><a href="#r-outputs" id="toc-r-outputs" class="nav-link" data-scroll-target="#r-outputs"><span class="header-section-number">5.4</span> R Outputs</a></li>
+  <li><a href="#notes-on-paths" id="toc-notes-on-paths" class="nav-link" data-scroll-target="#notes-on-paths"><span class="header-section-number">5.5</span> Notes on Paths</a></li>
+  </ul></li>
+  <li><a href="#query-based-data-preparation-legacy" id="toc-query-based-data-preparation-legacy" class="nav-link" data-scroll-target="#query-based-data-preparation-legacy"><span class="header-section-number">6</span> Query-Based Data Preparation (Legacy)</a></li>
+  <li><a href="#render-this-documentation" id="toc-render-this-documentation" class="nav-link" data-scroll-target="#render-this-documentation"><span class="header-section-number">7</span> Render This Documentation</a></li>
+  <li><a href="#push-to-github" id="toc-push-to-github" class="nav-link" data-scroll-target="#push-to-github"><span class="header-section-number">8</span> Push to GitHub</a></li>
+  <li><a href="#troubleshooting" id="toc-troubleshooting" class="nav-link" data-scroll-target="#troubleshooting"><span class="header-section-number">9</span> Troubleshooting</a></li>
   </ul>
 </nav>
 </div>
@@ -103,7 +118,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Sampler refactor plan (sam.tpl → R)</h1>
+<h1 class="title">Sampler Documentation</h1>
 </div>
 
 
@@ -126,293 +141,288 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="scope-and-constraints" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Scope and constraints</h1>
-<p><strong>Goal:</strong> Replace <code>sam.tpl</code> with an R implementation that preserves <strong>input file formats</strong> (<code>sam*.dat</code>, <code>age*.dat</code>, <code>len*.dat</code>, <code>bs_setup.dat</code>) and produces a <strong>single tidy output table</strong>. Speed is a priority.</p>
-<p><strong>Out of scope (for now):</strong></p>
-<ul>
-<li><code>.rep</code> files</li>
-<li>Changing input formats</li>
-<li>External database queries</li>
-</ul>
-</section>
-<section id="deliverables" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> Deliverables</h1>
+<section id="overview" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Overview</h1>
+<p>This repository contains two operational paths for generating sampler outputs:</p>
 <ol type="1">
-<li><code>R/sampler_refactor.R</code> (new): high‑performance R implementation.</li>
-<li><code>results/sampler_tidy.parquet</code>: single tidy table.</li>
-<li><code>results/sampler_bootstrap.parquet</code>: bootstrap outputs stored separately.</li>
-<li><code>index.html</code> (this file rendered from <code>index.qmd</code>) for GitHub Pages.</li>
+<li>ADMB executable workflow (legacy and still supported).</li>
+<li>R refactor workflow (<code>R/sampler_refactor.R</code>) that preserves the same input file formats and writes tidy Parquet outputs.</li>
 </ol>
-</section>
-<section id="highlevel-pipeline" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> High‑level pipeline</h1>
-<ol type="1">
-<li>Read control file (<code>sam*.dat</code>) and bootstrap settings (<code>bs_setup.dat</code>).</li>
-<li>Read and validate <code>age*.dat</code> and <code>len*.dat</code>.</li>
-<li>Compute:
+<p>Both paths use the same core input files:</p>
 <ul>
-<li>length frequencies</li>
-<li>age‑length keys (ALK)</li>
-<li>catch‑at‑age</li>
-<li>weight‑at‑age</li>
-</ul></li>
-<li>Bootstrap if requested.</li>
-<li>Return <strong>one tidy table</strong> with all outputs.</li>
-</ol>
-</section>
-<section id="data-structures-tidy" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Data structures (tidy)</h1>
-<p>All outputs will be stored in one long table with the following canonical columns:</p>
-<ul>
-<li><code>year</code></li>
-<li><code>strata</code></li>
-<li><code>sex</code> (1 = F, 2 = M, 3 = U)</li>
-<li><code>age</code></li>
-<li><code>len</code></li>
-<li><code>metric</code> (e.g., <code>lf_freq</code>, <code>lf_prop</code>, <code>alk_p</code>, <code>catch_at_age</code>, <code>wt_at_age</code>)</li>
-<li><code>value</code></li>
+<li><code>sam*.dat</code> control files</li>
+<li><code>age*.dat</code> age sample files</li>
+<li><code>len*.dat</code> length sample files</li>
+<li><code>bs_setup.dat</code> bootstrap settings</li>
 </ul>
 </section>
-<section id="performance-approach" class="level1" data-number="5">
-<h1 data-number="5"><span class="header-section-number">5</span> Performance approach</h1>
+<section id="repository-map" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Repository Map</h1>
 <ul>
-<li>Use <strong>data.table</strong> for in‑memory joins/aggregation.</li>
-<li>Precompute integer indices for strata/sex/age/length bins.</li>
-<li>Avoid repeated reshaping; keep long format and aggregate once per metric.</li>
-<li>Use <code>setDTthreads()</code> for parallel group operations when available.</li>
+<li><code>src/</code>: ADMB template (<code>sam.tpl</code>) and Makefile for compiling <code>sam</code>.</li>
+<li><code>admb/</code>: alternate ADMB build area.</li>
+<li><code>R/</code>: R scripts, including the refactor entry point.</li>
+<li><code>example/</code>: small synthetic inputs for smoke testing.</li>
+<li><code>cases/</code>: historical species/assessment-specific data and scripts.</li>
+<li><code>index.qmd</code>: this documentation source.</li>
 </ul>
 </section>
-<section id="algorithm-mapping-sam.tpl-r" class="level1" data-number="6">
-<h1 data-number="6"><span class="header-section-number">6</span> Algorithm mapping (sam.tpl → R)</h1>
+<section id="input-file-formats" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Input File Formats</h1>
+<section id="control-file-sam.dat" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="control-file-sam.dat"><span class="header-section-number">3.1</span> Control File (<code>sam*.dat</code>)</h2>
+<p>Token order expected by both ADMB (<code>src/sam.tpl</code>) and R (<code>R/sampler_refactor.R</code>):</p>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
 <thead>
 <tr class="header">
-<th>sam.tpl block</th>
-<th>R function</th>
-<th>Notes</th>
+<th>Position</th>
+<th>Name</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Read control + bs</td>
-<td><code>read_control()</code>, <code>read_bs_setup()</code></td>
-<td>no format changes</td>
+<td>1</td>
+<td><code>year</code></td>
+<td>Model year label</td>
 </tr>
 <tr class="even">
-<td>Read age/len inputs</td>
-<td><code>read_age()</code>, <code>read_len()</code></td>
-<td>fast <code>fread()</code></td>
+<td>2</td>
+<td><code>agefile</code></td>
+<td>Path to age file</td>
 </tr>
 <tr class="odd">
-<td>LF, ALK, Wt‑Len</td>
-<td><code>compute_lf()</code>, <code>compute_alk()</code>, <code>compute_wl()</code></td>
-<td>data.table group ops</td>
+<td>3</td>
+<td><code>lenfile</code></td>
+<td>Path to length file</td>
 </tr>
 <tr class="even">
-<td>Catch‑at‑age</td>
-<td><code>compute_caa()</code></td>
-<td>apply ALK to LF + strata catch</td>
+<td>4</td>
+<td><code>na_rcrds</code></td>
+<td>Number of age records</td>
 </tr>
 <tr class="odd">
-<td>Wt‑at‑age</td>
-<td><code>compute_wta()</code></td>
-<td>weighted mean by age</td>
+<td>5</td>
+<td><code>nl_rcrds</code></td>
+<td>Number of length records</td>
 </tr>
 <tr class="even">
-<td>Bootstrap loop</td>
-<td><code>bootstrap_sampler()</code></td>
-<td>resample by haul IDs</td>
+<td>6</td>
+<td><code>a1</code></td>
+<td>Min age</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td><code>a2</code></td>
+<td>Max age</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td><code>l1</code></td>
+<td>Min length bin</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td><code>l2</code></td>
+<td>Max length bin</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td><code>nstrata</code></td>
+<td>Number of strata</td>
+</tr>
+<tr class="odd">
+<td>11..(10+<code>nstrata</code>)</td>
+<td><code>strata_catch</code></td>
+<td>Catch by stratum</td>
+</tr>
+<tr class="even">
+<td>last</td>
+<td><code>outfile</code></td>
+<td>Main output file label</td>
+</tr>
+</tbody>
+</table>
+<p>Example (<code>example/sam2020.dat</code>):</p>
+<pre class="text"><code>2020 age2020.dat len2020.dat 6 6 2 5 30 38 1 100 results/Est_2020.dat</code></pre>
+</section>
+<section id="age-file-age.dat" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="age-file-age.dat"><span class="header-section-number">3.2</span> Age File (<code>age*.dat</code>)</h2>
+<p>Six columns:</p>
+<pre class="text"><code>strata haul sex age wt len</code></pre>
+</section>
+<section id="length-file-len.dat" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="length-file-len.dat"><span class="header-section-number">3.3</span> Length File (<code>len*.dat</code>)</h2>
+<p>Five columns:</p>
+<pre class="text"><code>strata haul sex len freq</code></pre>
+</section>
+<section id="bootstrap-setup-bs_setup.dat" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="bootstrap-setup-bs_setup.dat"><span class="header-section-number">3.4</span> Bootstrap Setup (<code>bs_setup.dat</code>)</h2>
+<p>Expected numeric values, one per line:</p>
+<ol type="1">
+<li><code>nbs</code> (number of bootstrap iterations; <code>0</code>/<code>1</code> means no bootstrap expansion in many use cases)</li>
+<li><code>sam_level_age_tows</code></li>
+<li><code>sam_level_ages</code></li>
+<li><code>sam_level_lf_tows</code></li>
+<li><code>sam_level_lfreqs</code></li>
+</ol>
+<p>Example (<code>example/bs_setup.dat</code>):</p>
+<pre class="text"><code>5
+2
+2
+2
+2</code></pre>
+</section>
+</section>
+<section id="admb-workflow" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> ADMB Workflow</h1>
+<section id="build" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="build"><span class="header-section-number">4.1</span> Build</h2>
+<p>From repository root:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> src</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> clean</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This compiles <code>sam</code> from <code>sam.tpl</code>.</p>
+</section>
+<section id="run" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="run"><span class="header-section-number">4.2</span> Run</h2>
+<p>Run from a directory containing <code>sam*.dat</code>, <code>age*.dat</code>, <code>len*.dat</code>, and <code>bs_setup.dat</code> (for example <code>example/</code>):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> example</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ex">../src/sam</span> <span class="at">-ind</span> sam2020.dat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="admb-runtime-options" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="admb-runtime-options"><span class="header-section-number">4.3</span> ADMB Runtime Options</h2>
+<p>Options parsed in <code>sam.tpl</code>:</p>
+<ul>
+<li><code>-io</code>: enable additional diagnostic printing.</li>
+<li><code>-sim</code>: simulation mode flag.</li>
+</ul>
+<p>Example:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">../src/sam</span> <span class="at">-nox</span> <span class="at">-io</span> <span class="at">-ind</span> sam2020.dat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="admb-outputs" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="admb-outputs"><span class="header-section-number">4.4</span> ADMB Outputs</h2>
+<p>ADMB writes multiple <code>.rep</code> files under <code>results/</code> (relative to the run directory), including:</p>
+<ul>
+<li><code>sex_catage&lt;year&gt;.rep</code></li>
+<li><code>catage&lt;year&gt;.rep</code></li>
+<li><code>str_catage&lt;year&gt;.rep</code></li>
+<li><code>sex_wtage&lt;year&gt;.rep</code></li>
+<li><code>wtage&lt;year&gt;.rep</code></li>
+<li><code>str_wtage&lt;year&gt;.rep</code></li>
+<li><code>LF_&lt;year&gt;.rep</code></li>
+<li><code>alk_&lt;year&gt;.rep</code></li>
+<li><code>wl_&lt;year&gt;.rep</code></li>
+</ul>
+</section>
+</section>
+<section id="r-refactor-workflow" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> R Refactor Workflow</h1>
+<p>Refactor entry point: <code>run_sampler_refactor()</code> in <code>R/sampler_refactor.R</code>.</p>
+<section id="prerequisites" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="prerequisites"><span class="header-section-number">5.1</span> Prerequisites</h2>
+<p>R packages:</p>
+<ul>
+<li><code>data.table</code></li>
+<li><code>arrow</code></li>
+</ul>
+</section>
+<section id="recommended-run-commands" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="recommended-run-commands"><span class="header-section-number">5.2</span> Recommended Run Commands</h2>
+<p>From repository root:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> example</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Equivalent direct call:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> example</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> <span class="at">-q</span> <span class="at">-e</span> <span class="st">"source('../R/sampler_refactor.R'); run_sampler_refactor('sam2020.dat','bs_setup.dat','../results')"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="function-arguments" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="function-arguments"><span class="header-section-number">5.3</span> Function Arguments</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>control_file</code></td>
+<td>required</td>
+<td>Path to <code>sam*.dat</code></td>
+</tr>
+<tr class="even">
+<td><code>bs_file</code></td>
+<td><code>"bs_setup.dat"</code></td>
+<td>Path to bootstrap file</td>
+</tr>
+<tr class="odd">
+<td><code>out_dir</code></td>
+<td><code>"results"</code></td>
+<td>Output directory</td>
+</tr>
+<tr class="even">
+<td><code>out_prefix</code></td>
+<td><code>"sampler"</code></td>
+<td>Output file prefix</td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="proposed-r-function-skeleton" class="level1" data-number="7">
-<h1 data-number="7"><span class="header-section-number">7</span> Proposed R function skeleton</h1>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>read_control <span class="ot">&lt;-</span> <span class="cf">function</span>(path) {</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">scan</span>(path, <span class="at">what =</span> <span class="st">"character"</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">year =</span> <span class="fu">as.integer</span>(x[<span class="dv">1</span>]),</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">agefile =</span> x[<span class="dv">2</span>],</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">lenfile =</span> x[<span class="dv">3</span>],</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">na =</span> <span class="fu">as.integer</span>(x[<span class="dv">4</span>]),</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">nl =</span> <span class="fu">as.integer</span>(x[<span class="dv">5</span>]),</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">a1 =</span> <span class="fu">as.integer</span>(x[<span class="dv">6</span>]),</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">a2 =</span> <span class="fu">as.integer</span>(x[<span class="dv">7</span>]),</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">l1 =</span> <span class="fu">as.integer</span>(x[<span class="dv">8</span>]),</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">l2 =</span> <span class="fu">as.integer</span>(x[<span class="dv">9</span>]),</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">nstrata =</span> <span class="fu">as.integer</span>(x[<span class="dv">10</span>]),</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">strata_catch =</span> <span class="fu">as.numeric</span>(x[<span class="dv">11</span><span class="sc">:</span>(<span class="dv">10</span> <span class="sc">+</span> <span class="fu">as.integer</span>(x[<span class="dv">10</span>]))]),</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">outfile =</span> x[<span class="dv">11</span> <span class="sc">+</span> <span class="fu">as.integer</span>(x[<span class="dv">10</span>])]</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>read_bs_setup <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">path =</span> <span class="st">"bs_setup.dat"</span>) {</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">scan</span>(path, <span class="at">what =</span> <span class="st">"numeric"</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">nbs =</span> <span class="fu">as.integer</span>(x[<span class="dv">2</span>]),</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">sam_level_age_tows =</span> x[<span class="dv">3</span>],</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">sam_level_ages =</span> x[<span class="dv">4</span>],</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">sam_level_lf_tows =</span> x[<span class="dv">5</span>],</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">sam_level_lfreqs =</span> x[<span class="dv">6</span>]</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>read_age <span class="ot">&lt;-</span> <span class="cf">function</span>(path) {</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  dt <span class="ot">&lt;-</span> <span class="fu">fread</span>(path, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"haul"</span>,<span class="st">"sex"</span>,<span class="st">"age"</span>,<span class="st">"wt"</span>,<span class="st">"len"</span>))</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>  dt[, haul <span class="sc">:</span><span class="er">=</span> <span class="fu">as.integer</span>(haul)]</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>  dt</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>read_len <span class="ot">&lt;-</span> <span class="cf">function</span>(path) {</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>  dt <span class="ot">&lt;-</span> <span class="fu">fread</span>(path, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"haul"</span>,<span class="st">"sex"</span>,<span class="st">"len"</span>,<span class="st">"freq"</span>))</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>  dt[, haul <span class="sc">:</span><span class="er">=</span> <span class="fu">as.integer</span>(haul)]</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>  dt</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>compute_lf <span class="ot">&lt;-</span> <span class="cf">function</span>(len_dt) {</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>  len_dt[, .(<span class="at">freq =</span> <span class="fu">sum</span>(freq)), by <span class="ot">=</span> .(strata, sex, len)]</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>compute_alk <span class="ot">&lt;-</span> <span class="cf">function</span>(age_dt) {</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>  age_dt[, .N, by <span class="ot">=</span> .(strata, sex, len, age)</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    ][, p <span class="sc">:</span><span class="er">=</span> N <span class="sc">/</span> <span class="fu">sum</span>(N), by <span class="ot">=</span> .(strata, sex, len)</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    ][, .(strata, sex, len, age, p)]</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>compute_caa <span class="ot">&lt;-</span> <span class="cf">function</span>(lf_dt, alk_dt, strata_catch) {</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>  <span class="co"># join LF with ALK, scale by strata catch</span></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>  dt <span class="ot">&lt;-</span> lf_dt[alk_dt, on <span class="ot">=</span> .(strata, sex, len), allow.cartesian <span class="ot">=</span> <span class="cn">TRUE</span>]</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>  dt[, catch_n <span class="sc">:</span><span class="er">=</span> freq <span class="sc">*</span> p]</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>  dt[, .(<span class="at">catch_at_age =</span> <span class="fu">sum</span>(catch_n)), by <span class="ot">=</span> .(strata, sex, age)]</span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>compute_wta <span class="ot">&lt;-</span> <span class="cf">function</span>(age_dt) {</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>  age_dt[, .(<span class="at">wt_at_age =</span> <span class="fu">weighted.mean</span>(wt, <span class="at">w =</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)),</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>         by <span class="ot">=</span> .(strata, sex, age)]</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>bootstrap_sampler <span class="ot">&lt;-</span> <span class="cf">function</span>(age_dt, len_dt, nbs, <span class="at">seed =</span> <span class="dv">123</span>) {</span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set.seed</span>(seed)</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>  <span class="co"># resample hauls within strata/sex for age and length datasets</span></span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>  <span class="co"># return list of tidy tables with bootstrap id</span></span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="output-specification" class="level1" data-number="8">
-<h1 data-number="8"><span class="header-section-number">8</span> Output specification</h1>
-<p><strong>Point estimates</strong> are stored in a single long table with columns:</p>
+<section id="r-outputs" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="r-outputs"><span class="header-section-number">5.4</span> R Outputs</h2>
 <ul>
-<li><code>year</code>, <code>strata</code>, <code>sex</code>, <code>age</code>, <code>len</code>, <code>metric</code>, <code>value</code></li>
+<li><code>results/&lt;prefix&gt;_tidy.parquet</code></li>
+<li><code>results/&lt;prefix&gt;_bootstrap_&lt;year&gt;.parquet</code> (if <code>nbs &gt;= 1</code>)</li>
+<li><code>results/&lt;prefix&gt;_refactor.log</code></li>
 </ul>
-<p><strong>Bootstrap outputs</strong> are stored separately with the same schema plus <code>bootstrap</code>.</p>
-<p>Recommended storage: <strong>Parquet</strong> for speed and size.</p>
 </section>
-<section id="benchmark-plan" class="level1" data-number="9">
-<h1 data-number="9"><span class="header-section-number">9</span> Benchmark plan</h1>
-<p>Add a benchmark section comparing ADMB vs R on:</p>
+<section id="notes-on-paths" class="level2" data-number="5.5">
+<h2 data-number="5.5" class="anchored" data-anchor-id="notes-on-paths"><span class="header-section-number">5.5</span> Notes on Paths</h2>
+<p><code>sam*.dat</code> usually stores <code>agefile</code> and <code>lenfile</code> as relative names (for example <code>age2020.dat</code>). Use the same working directory as those files (for example <code>example/</code>) when running.</p>
+</section>
+</section>
+<section id="query-based-data-preparation-legacy" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Query-Based Data Preparation (Legacy)</h1>
+<p>Legacy query scripts live in <code>R/</code>:</p>
 <ul>
-<li>runtime (seconds)</li>
-<li>peak memory (MB)</li>
-<li>row counts and checksum of key outputs</li>
+<li><code>R/CallQueriesForSamplerData.R</code></li>
+<li><code>R/QueryAgesForSampler.R</code></li>
+<li><code>R/QueryLengthsForSampler.R</code></li>
+<li><code>R/QueryCatchByStrata.R</code></li>
 </ul>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>benchmark <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="fu">c</span>(<span class="st">"ADMB"</span>, <span class="st">"R"</span>),</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">runtime_sec =</span> <span class="fu">c</span>(<span class="cn">NA_real_</span>, <span class="cn">NA_real_</span>),</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_mem_mb =</span> <span class="fu">c</span>(<span class="cn">NA_real_</span>, <span class="cn">NA_real_</span>),</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">rows =</span> <span class="fu">c</span>(<span class="cn">NA_integer_</span>, <span class="cn">NA_integer_</span>),</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">checksum =</span> <span class="fu">c</span>(<span class="cn">NA_character_</span>, <span class="cn">NA_character_</span>)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>benchmark</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
+<p>These use AFSC/AKFIN ODBC connections and keyring credentials to generate <code>age*.dat</code>, <code>len*.dat</code>, and <code>sam*.dat</code> files.</p>
 </section>
-<section id="usage" class="level1" data-number="10">
-<h1 data-number="10"><span class="header-section-number">10</span> Usage</h1>
-<p>Required R packages: <code>data.table</code>, <code>arrow</code>. The refactor writes a timing log to <code>results/sampler_refactor.log</code> by default (prefix configurable).</p>
-<p>For GitHub Pages, render <code>index.qmd</code> to <code>index.html</code> and publish via <code>/docs</code> or <code>gh-pages</code>.</p>
+<section id="render-this-documentation" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Render This Documentation</h1>
+<p>From repository root:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render index.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This produces <code>index.html</code> in the repository root.</p>
 </section>
-<section id="packaging" class="level1" data-number="11">
-<h1 data-number="11"><span class="header-section-number">11</span> Packaging</h1>
-<p>A clean package tree is staged in <code>pkg/</code> for <code>R CMD build</code> and <code>R CMD check</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> CMD build pkg</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> CMD check samplerrefactor_0.1.0.tar.gz <span class="at">--no-manual</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> refactor CONTROL=example/sam2020.dat BS=example/bs_setup.dat OUT=results</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> render-only</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="push-to-github" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Push to GitHub</h1>
+<p>Typical update sequence:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add index.qmd index.html</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">"Update sampler documentation"</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin <span class="op">&lt;</span>branch<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>If your repository uses GitHub Pages from root or <code>gh-pages</code>, commit <code>index.html</code> accordingly.</p>
 </section>
-<section id="minimal-example-dataset" class="level1" data-number="12">
-<h1 data-number="12"><span class="header-section-number">12</span> Minimal example dataset</h1>
-<p>A tiny test dataset is stored in <code>example/</code>:</p>
+<section id="troubleshooting" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Troubleshooting</h1>
 <ul>
-<li><code>example/sam2020.dat</code></li>
-<li><code>example/age2020.dat</code></li>
-<li><code>example/len2020.dat</code></li>
-<li><code>example/bs_setup.dat</code></li>
+<li><code>Package 'arrow' is required for Parquet output.</code>
+<ul>
+<li>Install <code>arrow</code> in your R library before running the refactor.</li>
+</ul></li>
+<li><code>quarto: command not found</code>
+<ul>
+<li>Install Quarto and ensure it is on your PATH.</li>
+</ul></li>
+<li>ADMB binary not found
+<ul>
+<li>Ensure <code>admb</code> and/or compiled <code>sam</code> exists and is executable.</li>
+</ul></li>
 </ul>
-<p>Run from the <code>example/</code> directory to keep relative paths intact.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>point <span class="ot">&lt;-</span> arrow<span class="sc">::</span><span class="fu">read_parquet</span>(<span class="st">"results/sampler_tidy.parquet"</span>)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>boot  <span class="ot">&lt;-</span> arrow<span class="sc">::</span><span class="fu">read_parquet</span>(<span class="st">"results/sampler_bootstrap_2020.parquet"</span>)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Basic checks</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>expected_strata <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(point<span class="sc">$</span>strata))</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>expected_sex <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(point<span class="sc">$</span>sex))</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>expected_age <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(point[<span class="sc">!</span><span class="fu">is.na</span>(age), age]))</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>expected_len <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(point[<span class="sc">!</span><span class="fu">is.na</span>(len), len]))</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>missing_by_metric <span class="ot">&lt;-</span> point[, .(<span class="at">missing =</span> <span class="fu">list</span>(</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setdiff</span>(</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">CJ</span>(<span class="at">strata =</span> expected_strata, <span class="at">sex =</span> expected_sex),</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unique</span>(.SD),</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"sex"</span>)</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>)), by <span class="ot">=</span> .(metric), .SDcols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"sex"</span>)]</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>missing_age_by_metric <span class="ot">&lt;-</span> point[<span class="sc">!</span><span class="fu">is.na</span>(age), .(<span class="at">missing =</span> <span class="fu">list</span>(</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setdiff</span>(</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">CJ</span>(<span class="at">strata =</span> expected_strata, <span class="at">sex =</span> expected_sex, <span class="at">age =</span> expected_age),</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unique</span>(.SD),</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"sex"</span>,<span class="st">"age"</span>)</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>)), by <span class="ot">=</span> .(metric), .SDcols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"sex"</span>,<span class="st">"age"</span>)]</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>missing_len_by_metric <span class="ot">&lt;-</span> point[<span class="sc">!</span><span class="fu">is.na</span>(len), .(<span class="at">missing =</span> <span class="fu">list</span>(</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setdiff</span>(</span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">CJ</span>(<span class="at">strata =</span> expected_strata, <span class="at">sex =</span> expected_sex, <span class="at">len =</span> expected_len),</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unique</span>(.SD),</span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"sex"</span>,<span class="st">"len"</span>)</span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>)), by <span class="ot">=</span> .(metric), .SDcols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"strata"</span>,<span class="st">"sex"</span>,<span class="st">"len"</span>)]</span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="fu">list</span>(</span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_point =</span> <span class="fu">nrow</span>(point),</span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_boot =</span> <span class="fu">nrow</span>(boot),</span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>  <span class="at">metrics =</span> <span class="fu">sort</span>(<span class="fu">unique</span>(point<span class="sc">$</span>metric)),</span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>  <span class="at">catch_sum =</span> point[metric <span class="sc">==</span> <span class="st">"catch_at_age"</span>, <span class="fu">sum</span>(value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)],</span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>  <span class="at">missing_by_metric =</span> missing_by_metric,</span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>  <span class="at">missing_age_by_metric =</span> missing_age_by_metric,</span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">missing_len_by_metric =</span> missing_len_by_metric</span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="next-steps" class="level1" data-number="13">
-<h1 data-number="13"><span class="header-section-number">13</span> Next steps</h1>
-<ol type="1">
-<li>Implement <code>R/sampler_refactor.R</code> using data.table.</li>
-<li>Validate against existing ADMB outputs for 1–2 years.</li>
-<li>Add benchmark section (runtime, memory, row counts).</li>
-</ol>
 </section>
 
 </main>
