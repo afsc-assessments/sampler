@@ -193,7 +193,7 @@ df$mnth <- factor(mymonths[df$month] , levels=month.abb)
 p <- df %>% mutate(wtstd=ifelse(month==5,NA,ifelse(month>10,NA,wtstd))) %>% ggplot( aes(x=(mnth),y=wtstd,fill=as.factor(month)))+ 
     geom_hline(yintercept=1,size=2) + geom_violin(draw_quantiles=0.5)   + ylim(c(0.5,1.5)) + xlab('Month') + ylab('Standardized weight (30-65 cm)') + mytheme + guides(fill=FALSE)
 p
-ggsave(paste0(doc_dir,"figs/lw_anom_month.pdf",p,width=6,height=4)
+ggsave(paste0(doc_dir,"figs/lw_anom_month.pdf"),p,width=6,height=4)
 
 # Look by year/month (but order good!)
 mymonths <- c("Jan","Feb","Mar", "Apr","May","Jun", "Jul","Aug","Sep", "Oct","Nov","Dec")
@@ -204,11 +204,10 @@ p <- df %>% filter(year>2000) %>% mutate(wtstd=ifelse(month==5,NA,ifelse(month>1
     ggplot( aes(x=as.factor(yrmnth),y=wtstd,fill=mnth))+ 
     geom_hline(yintercept=1,size=2) + geom_violin(draw_quantiles=0.5)   + ylim(c(0.5,1.5)) + xlab('Month') + ylab('Standardized weight (30-65 cm)') + mytheme + guides(fill=FALSE)
     p
-ggsave(paste0(doc_dir,"figs/lw_anom_month.pdf",p,width=6,height=4)
+ggsave(paste0(doc_dir,"figs/lw_anom_year_month.pdf"),p,width=6,height=4)
 
 df$mnth <- factor(mymonths[df$month] , levels=month.abb)
 df.m <- df %>% group_by(strata,month) %>% summarise(wtstd=mean(wtstd)) 
-df.m$Year <- as.numeric(df.m$Year)+1990
 str(df.m)
 p<- ggplot(df.m,aes(x=month,y=wtstd,color=strata,shape=strata)) + geom_point(size=4) + 
      geom_smooth(span=.9) + mytheme + ylim(c(.85,1.15)) + 
@@ -252,10 +251,10 @@ p + coord_flip()
 p
 
 
-ggsave(paste0(doc_dir,"figs/lw_anom_str.pdf",p,width=6,height=4)
+ggsave(paste0(doc_dir,"figs/lw_anom_str.pdf"),p,width=6,height=4)
 getwd()
 doc_dir
-ggsave(paste0(doc_dir,"figs/lw_anom_mo.pdf",p,width=8,height=4)
+ggsave(paste0(doc_dir,"figs/lw_anom_mo.pdf"),p,width=8,height=4)
 ?geom_violin
 ggsave("lw_anom_mo.pdf",p,width=8,height=4)
 dim(df)
@@ -360,4 +359,3 @@ p <- ggplot(adf,aes(x=as.factor(age),y=wt))+
 p
 ?colour
 # + ggtitle("Weight-at-Age (grams)")  + mytheme
-

@@ -52,8 +52,7 @@ for (i in 1982:2015)
 rwadt <- data.table(read.table(paste0("results/race_wts.rep"),header=TRUE) )
 names(rwadt) <- c("yr",1:15)
 rwadt.m <- melt(rwadt, measure.vars = 2:16, variable.name = "age", value.name = "wt")
-setkey(wadt.m,(yr,age))
-setkey(rwadt.m,(yr,age))
+setkey(rwadt.m, yr, age)
 rwadt.m
 str(rwadt.m)
   p <- rwadt.m[age>2&age<11] %>% ggplot(aes(x=as.factor(age),y=wt,fill=as.factor(yr-age))) 
@@ -62,11 +61,11 @@ str(rwadt.m)
   p
 # write files
 # Long to wide
-res <- dcast(wadt.m[,.(mean(wt)),.(yr,age),],yr~age,value.var="V1")
+res <- dcast(rwadt.m[,.(mean(wt)),.(yr,age),],yr~age,value.var="V1")
 write.table(res, file="mnsrvwt.dat")
-res <- dcast(wadt.m[,.(median(wt)),.(yr,age),],yr~age,value.var="V1")
+res <- dcast(rwadt.m[,.(median(wt)),.(yr,age),],yr~age,value.var="V1")
 write.table(res, file="mdnsrvwt.dat")
-res <- dcast(wadt.m[,.(sd(wt)),.(yr,age),],yr~age,value.var="V1")
+res <- dcast(rwadt.m[,.(sd(wt)),.(yr,age),],yr~age,value.var="V1")
 write.table(res, file="sdsrvwt.dat")
 res
 rwadt.m
@@ -97,7 +96,7 @@ dtmp <- as.data.frame(dcast(scadt.m[yr==2015&age %between% c(3,9),.(age,p=N/sum(
  pairs(dtmp[2:8], panel=panel.smooth, cex=0.5, pch=19, bg = "light blue", diag.panel = panel.hist, cex.labels = 2, font.labels = 2,xlim=c(0,.5), ylim=c(0,.5))
 
 names(dtmp)
-[,.("3","4","5","6","7","8","9")]# %>% ggpairs()
+dtmp[, c("3","4","5","6","7","8","9")] # %>% ggpairs()
 bb(scadt.m)
 
 res <- dcast(scadt.m[,.(mean(N)),.(yr,age),],yr~age,value.var="V1")

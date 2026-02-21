@@ -46,8 +46,9 @@ tt <- filter(tbs) %>% mutate(age=as.numeric(age)) %>% group_by(yr,sim) %>%
 t2 <- group_by(tt,yr) %>% summarise(mobs=sum(p*age),var=sum(age*age*p)-mobs*mobs,sd=sqrt(var))
   dim(t2)
   dim(tt)
-  mobs <- pobs %*% av
-  stmp <- sqrt(elem_prod(av,av)*pobs - mobs*mobs));
+  # Legacy ADMB note (not executable R):
+  # mobs <- pobs %*% av
+  # stmp <- sqrt(sum(av * av * pobs) - mobs * mobs)
 
 # Check if proportions look right...
 ggplot(tt, aes(x=age,y=p)) +  geom_line() + facet_wrap( ~ yr) + mytheme #+ ggtitle(paste("Sample size ="f))
@@ -110,7 +111,7 @@ tt <- filter(tbs) %>% mutate(age=as.numeric(age)) %>% group_by(yr,sim) %>%
 group_by(tt,yr) %>% mutate(mean_age=sum(age*p)) %>% ggplot(aes(x=yr,y=mean_age)) + geom_line() + mytheme
 
 
-  variance of proportion at age (sd_age) / var(average_age)
+  # variance of proportion at age (sd_age) / var(average_age)
 
   av   <- 1:15
   av*av
