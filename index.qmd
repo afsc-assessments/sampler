@@ -396,44 +396,36 @@ make yr=2024
 
 Use this only when `data/sam_<year>.dat` exists (underscore form). Archived fishery controls are named `sam<year>.dat` (no underscore).
 
-## Quick commands (year ranges)
+## Consolidated driver (year ranges)
 
-Run a range of archived `data/fishery/samYYYY.dat` control files with ADMB:
+Use the single fishery driver to run ADMB over `data/fishery/samYYYY.dat` and write a rolled-up summary CSV:
 
 ```bash
-cd cases/ebswpSAM/data/fishery
-cat > bs_setup.dat <<'TXT'
-1
-1
-1
-1
-1
-TXT
-for y in $(seq 1991 2024); do
-  ../../../src/sam -ind "sam${y}.dat"
-done
+cd cases/ebswpSAM
+Rscript EBS_sampler_fishery.R start_year=1991 end_year=2024 nbs=1 levels=1,1,1,1
 ```
 
-Run a range with the R refactor (writes one Parquet pair per year prefix):
+Common options:
+
+- `start_year`, `end_year`: year range to run/read.
+- `run_sampler=true|false`: run ADMB, or only summarize existing `results/Est_<year>.dat` files.
+- `nbs`: first line for `bs_setup.dat` (for example `1` for point estimates, `1000` for bootstrap mode).
+- `levels`: four comma-separated sampling controls for `bs_setup.dat` (for example `1,1,1,1`).
+- `io=true|false`: pass `-nox -io` to `sam` when needed.
+
+Summary-only example (no ADMB rerun):
 
 ```bash
-cd cases/ebswpSAM/data/fishery
-cat > bs_setup.dat <<'TXT'
-1000
-2
-2
-2
-2
-TXT
-for y in $(seq 2020 2024); do
-  R -q -e "source('../../../R/sampler_refactor.R'); run_sampler_refactor('sam${y}.dat','bs_setup.dat','results','ebswp_${y}')"
-done
+cd cases/ebswpSAM
+Rscript EBS_sampler_fishery.R start_year=1991 end_year=2024 run_sampler=false
 ```
 
 ## Key ebswpSAM scripts
 
-- `cases/ebswpSAM/EBS_sampler2023.R`: end-to-end prep + diagnostics for recent years.
-- `cases/ebswpSAM/sampler.R`: defines `Sampler()` and `SetBS()` utilities used in case workflows.
+- `cases/ebswpSAM/EBS_sampler_fishery.R`: canonical fishery driver for year ranges in `data/fishery` (ADMB run + summary).
+- `cases/ebswpSAM/EBS_sampler.R`: compatibility wrapper to run the consolidated driver with default full range.
+- `cases/ebswpSAM/EBS_sampler2021.R`, `cases/ebswpSAM/EBS_sampler2022.R`, `cases/ebswpSAM/EBS_sampler2023.R`: compatibility wrappers pinned to historical end years.
+- `cases/ebswpSAM/sampler.R`: legacy helper definitions (`Sampler()`, `SetBS()`) used by earlier workflows.
 - `cases/ebswpSAM/ebs_survey.R`: survey-oriented conversion and sampler runs.
 - `cases/ebswpSAM/imported/poll_age.sql` and `cases/ebswpSAM/imported/poll_len.sql`: source SQL templates.
 

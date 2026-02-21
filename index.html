@@ -154,7 +154,7 @@ window.Quarto = {
   <li><a href="#r-refactor-run-for-one-year" id="toc-r-refactor-run-for-one-year" class="nav-link" data-scroll-target="#r-refactor-run-for-one-year"><span class="header-section-number">7.1.2</span> R refactor run for one year</a></li>
   </ul></li>
   <li><a href="#alternate-generated-data-run-casesebswpsammakefile" id="toc-alternate-generated-data-run-casesebswpsammakefile" class="nav-link" data-scroll-target="#alternate-generated-data-run-casesebswpsammakefile"><span class="header-section-number">7.2</span> Alternate: generated-data run (<code>cases/ebswpSAM/Makefile</code>)</a></li>
-  <li><a href="#quick-commands-year-ranges" id="toc-quick-commands-year-ranges" class="nav-link" data-scroll-target="#quick-commands-year-ranges"><span class="header-section-number">7.3</span> Quick commands (year ranges)</a></li>
+  <li><a href="#consolidated-driver-year-ranges" id="toc-consolidated-driver-year-ranges" class="nav-link" data-scroll-target="#consolidated-driver-year-ranges"><span class="header-section-number">7.3</span> Consolidated driver (year ranges)</a></li>
   <li><a href="#key-ebswpsam-scripts" id="toc-key-ebswpsam-scripts" class="nav-link" data-scroll-target="#key-ebswpsam-scripts"><span class="header-section-number">7.4</span> Key ebswpSAM scripts</a></li>
   <li><a href="#known-path-caveats" id="toc-known-path-caveats" class="nav-link" data-scroll-target="#known-path-caveats"><span class="header-section-number">7.5</span> Known path caveats</a></li>
   </ul></li>
@@ -593,38 +593,30 @@ N_{y,99,99,a} = \sum_k \sum_s N_{y,k,s,a}
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> yr=2024</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Use this only when <code>data/sam_&lt;year&gt;.dat</code> exists (underscore form). Archived fishery controls are named <code>sam&lt;year&gt;.dat</code> (no underscore).</p>
 </section>
-<section id="quick-commands-year-ranges" class="level2" data-number="7.3">
-<h2 data-number="7.3" class="anchored" data-anchor-id="quick-commands-year-ranges"><span class="header-section-number">7.3</span> Quick commands (year ranges)</h2>
-<p>Run a range of archived <code>data/fishery/samYYYY.dat</code> control files with ADMB:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM/data/fishery</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> bs_setup.dat <span class="op">&lt;&lt;'TXT'</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="op">TXT</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> y <span class="kw">in</span> <span class="va">$(</span><span class="fu">seq</span> 1991 2024<span class="va">)</span><span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="ex">../../../src/sam</span> <span class="at">-ind</span> <span class="st">"sam</span><span class="va">${y}</span><span class="st">.dat"</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Run a range with the R refactor (writes one Parquet pair per year prefix):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM/data/fishery</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> bs_setup.dat <span class="op">&lt;&lt;'TXT'</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="st">1000</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="st">2</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="st">2</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="st">2</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="st">2</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="op">TXT</span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> y <span class="kw">in</span> <span class="va">$(</span><span class="fu">seq</span> 2020 2024<span class="va">)</span><span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="ex">R</span> <span class="at">-q</span> <span class="at">-e</span> <span class="st">"source('../../../R/sampler_refactor.R'); run_sampler_refactor('sam</span><span class="va">${y}</span><span class="st">.dat','bs_setup.dat','results','ebswp_</span><span class="va">${y}</span><span class="st">')"</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="consolidated-driver-year-ranges" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="consolidated-driver-year-ranges"><span class="header-section-number">7.3</span> Consolidated driver (year ranges)</h2>
+<p>Use the single fishery driver to run ADMB over <code>data/fishery/samYYYY.dat</code> and write a rolled-up summary CSV:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> EBS_sampler_fishery.R start_year=1991 end_year=2024 nbs=1 levels=1,1,1,1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Common options:</p>
+<ul>
+<li><code>start_year</code>, <code>end_year</code>: year range to run/read.</li>
+<li><code>run_sampler=true|false</code>: run ADMB, or only summarize existing <code>results/Est_&lt;year&gt;.dat</code> files.</li>
+<li><code>nbs</code>: first line for <code>bs_setup.dat</code> (for example <code>1</code> for point estimates, <code>1000</code> for bootstrap mode).</li>
+<li><code>levels</code>: four comma-separated sampling controls for <code>bs_setup.dat</code> (for example <code>1,1,1,1</code>).</li>
+<li><code>io=true|false</code>: pass <code>-nox -io</code> to <code>sam</code> when needed.</li>
+</ul>
+<p>Summary-only example (no ADMB rerun):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> EBS_sampler_fishery.R start_year=1991 end_year=2024 run_sampler=false</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="key-ebswpsam-scripts" class="level2" data-number="7.4">
 <h2 data-number="7.4" class="anchored" data-anchor-id="key-ebswpsam-scripts"><span class="header-section-number">7.4</span> Key ebswpSAM scripts</h2>
 <ul>
-<li><code>cases/ebswpSAM/EBS_sampler2023.R</code>: end-to-end prep + diagnostics for recent years.</li>
-<li><code>cases/ebswpSAM/sampler.R</code>: defines <code>Sampler()</code> and <code>SetBS()</code> utilities used in case workflows.</li>
+<li><code>cases/ebswpSAM/EBS_sampler_fishery.R</code>: canonical fishery driver for year ranges in <code>data/fishery</code> (ADMB run + summary).</li>
+<li><code>cases/ebswpSAM/EBS_sampler.R</code>: compatibility wrapper to run the consolidated driver with default full range.</li>
+<li><code>cases/ebswpSAM/EBS_sampler2021.R</code>, <code>cases/ebswpSAM/EBS_sampler2022.R</code>, <code>cases/ebswpSAM/EBS_sampler2023.R</code>: compatibility wrappers pinned to historical end years.</li>
+<li><code>cases/ebswpSAM/sampler.R</code>: legacy helper definitions (<code>Sampler()</code>, <code>SetBS()</code>) used by earlier workflows.</li>
 <li><code>cases/ebswpSAM/ebs_survey.R</code>: survey-oriented conversion and sampler runs.</li>
 <li><code>cases/ebswpSAM/imported/poll_age.sql</code> and <code>cases/ebswpSAM/imported/poll_len.sql</code>: source SQL templates.</li>
 </ul>
