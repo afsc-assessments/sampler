@@ -1,0 +1,267 @@
+---
+title: "Sampler refactor plan (sam.tpl → R)"
+author: "Jim Ianelli"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+# Scope and constraints
+
+**Goal:** Replace `sam.tpl` with an R implementation that preserves **input file formats** (`sam*.dat`, `age*.dat`, `len*.dat`, `bs_setup.dat`) and produces a **single tidy output table**. Speed is a priority.
+
+**Out of scope (for now):**
+
+- `.rep` files
+- Changing input formats
+- External database queries
+
+# Deliverables
+
+1. `R/sampler_refactor.R` (new): high‑performance R implementation.
+2. `results/sampler_tidy.parquet`: single tidy table.
+3. `results/sampler_bootstrap.parquet`: bootstrap outputs stored separately.
+4. `index.html` (this file rendered from `index.qmd`) for GitHub Pages.
+
+# High‑level pipeline
+
+1. Read control file (`sam*.dat`) and bootstrap settings (`bs_setup.dat`).
+2. Read and validate `age*.dat` and `len*.dat`.
+3. Compute:
+   - length frequencies
+   - age‑length keys (ALK)
+   - catch‑at‑age
+   - weight‑at‑age
+4. Bootstrap if requested.
+5. Return **one tidy table** with all outputs.
+
+# Data structures (tidy)
+
+All outputs will be stored in one long table with the following canonical columns:
+
+- `year`
+- `strata`
+- `sex` (1 = F, 2 = M, 3 = U)
+- `age`
+- `len`
+- `metric` (e.g., `lf_freq`, `lf_prop`, `alk_p`, `catch_at_age`, `wt_at_age`)
+- `value`
+
+# Performance approach
+
+- Use **data.table** for in‑memory joins/aggregation.
+- Precompute integer indices for strata/sex/age/length bins.
+- Avoid repeated reshaping; keep long format and aggregate once per metric.
+- Use `setDTthreads()` for parallel group operations when available.
+
+# Algorithm mapping (sam.tpl → R)
+
+| sam.tpl block | R function | Notes |
+|---|---|---|
+| Read control + bs | `read_control()`, `read_bs_setup()` | no format changes |
+| Read age/len inputs | `read_age()`, `read_len()` | fast `fread()` |
+| LF, ALK, Wt‑Len | `compute_lf()`, `compute_alk()`, `compute_wl()` | data.table group ops |
+| Catch‑at‑age | `compute_caa()` | apply ALK to LF + strata catch |
+| Wt‑at‑age | `compute_wta()` | weighted mean by age |
+| Bootstrap loop | `bootstrap_sampler()` | resample by haul IDs |
+
+# Proposed R function skeleton
+
+```{r}
+#| eval: false
+library(data.table)
+
+read_control <- function(path) {
+  x <- scan(path, what = "character", quiet = TRUE)
+  list(
+    year = as.integer(x[1]),
+    agefile = x[2],
+    lenfile = x[3],
+    na = as.integer(x[4]),
+    nl = as.integer(x[5]),
+    a1 = as.integer(x[6]),
+    a2 = as.integer(x[7]),
+    l1 = as.integer(x[8]),
+    l2 = as.integer(x[9]),
+    nstrata = as.integer(x[10]),
+    strata_catch = as.numeric(x[11:(10 + as.integer(x[10]))]),
+    outfile = x[11 + as.integer(x[10])]
+  )
+}
+
+read_bs_setup <- function(path = "bs_setup.dat") {
+  x <- scan(path, what = "numeric", quiet = TRUE)
+  list(
+    nbs = as.integer(x[2]),
+    sam_level_age_tows = x[3],
+    sam_level_ages = x[4],
+    sam_level_lf_tows = x[5],
+    sam_level_lfreqs = x[6]
+  )
+}
+
+read_age <- function(path) {
+  dt <- fread(path, col.names = c("strata","haul","sex","age","wt","len"))
+  dt[, haul := as.integer(haul)]
+  dt
+}
+
+read_len <- function(path) {
+  dt <- fread(path, col.names = c("strata","haul","sex","len","freq"))
+  dt[, haul := as.integer(haul)]
+  dt
+}
+
+compute_lf <- function(len_dt) {
+  len_dt[, .(freq = sum(freq)), by = .(strata, sex, len)]
+}
+
+compute_alk <- function(age_dt) {
+  age_dt[, .N, by = .(strata, sex, len, age)
+    ][, p := N / sum(N), by = .(strata, sex, len)
+    ][, .(strata, sex, len, age, p)]
+}
+
+compute_caa <- function(lf_dt, alk_dt, strata_catch) {
+  # join LF with ALK, scale by strata catch
+  dt <- lf_dt[alk_dt, on = .(strata, sex, len), allow.cartesian = TRUE]
+  dt[, catch_n := freq * p]
+  dt[, .(catch_at_age = sum(catch_n)), by = .(strata, sex, age)]
+}
+
+compute_wta <- function(age_dt) {
+  age_dt[, .(wt_at_age = weighted.mean(wt, w = 1, na.rm = TRUE)),
+         by = .(strata, sex, age)]
+}
+
+bootstrap_sampler <- function(age_dt, len_dt, nbs, seed = 123) {
+  set.seed(seed)
+  # resample hauls within strata/sex for age and length datasets
+  # return list of tidy tables with bootstrap id
+}
+```
+
+# Output specification
+
+**Point estimates** are stored in a single long table with columns:
+
+- `year`, `strata`, `sex`, `age`, `len`, `metric`, `value`
+
+**Bootstrap outputs** are stored separately with the same schema plus `bootstrap`.
+
+Recommended storage: **Parquet** for speed and size.
+
+# Benchmark plan
+
+Add a benchmark section comparing ADMB vs R on:
+
+- runtime (seconds)
+- peak memory (MB)
+- row counts and checksum of key outputs
+
+```{r}
+#| label: benchmark-template
+#| eval: false
+library(data.table)
+benchmark <- data.table(
+  method = c("ADMB", "R"),
+  runtime_sec = c(NA_real_, NA_real_),
+  peak_mem_mb = c(NA_real_, NA_real_),
+  rows = c(NA_integer_, NA_integer_),
+  checksum = c(NA_character_, NA_character_)
+)
+benchmark
+```
+
+# Usage
+
+Required R packages: `data.table`, `arrow`. The refactor writes a timing log to `results/sampler_refactor.log` by default (prefix configurable).
+
+For GitHub Pages, render `index.qmd` to `index.html` and publish via `/docs` or `gh-pages`.
+
+# Packaging
+
+A clean package tree is staged in `pkg/` for `R CMD build` and `R CMD check`.
+
+```bash
+R CMD build pkg
+R CMD check samplerrefactor_0.1.0.tar.gz --no-manual
+```
+
+```bash
+make refactor CONTROL=example/sam2020.dat BS=example/bs_setup.dat OUT=results
+make render-only
+```
+
+# Minimal example dataset
+
+A tiny test dataset is stored in `example/`:
+
+- `example/sam2020.dat`
+- `example/age2020.dat`
+- `example/len2020.dat`
+- `example/bs_setup.dat`
+
+Run from the `example/` directory to keep relative paths intact.
+
+```{r}
+#| label: example-validation
+#| eval: false
+library(data.table)
+
+point <- arrow::read_parquet("results/sampler_tidy.parquet")
+boot  <- arrow::read_parquet("results/sampler_bootstrap_2020.parquet")
+
+# Basic checks
+expected_strata <- sort(unique(point$strata))
+expected_sex <- sort(unique(point$sex))
+expected_age <- sort(unique(point[!is.na(age), age]))
+expected_len <- sort(unique(point[!is.na(len), len]))
+
+missing_by_metric <- point[, .(missing = list(
+  setdiff(
+    CJ(strata = expected_strata, sex = expected_sex),
+    unique(.SD),
+    by = c("strata","sex")
+  )
+)), by = .(metric), .SDcols = c("strata","sex")]
+
+missing_age_by_metric <- point[!is.na(age), .(missing = list(
+  setdiff(
+    CJ(strata = expected_strata, sex = expected_sex, age = expected_age),
+    unique(.SD),
+    by = c("strata","sex","age")
+  )
+)), by = .(metric), .SDcols = c("strata","sex","age")]
+
+missing_len_by_metric <- point[!is.na(len), .(missing = list(
+  setdiff(
+    CJ(strata = expected_strata, sex = expected_sex, len = expected_len),
+    unique(.SD),
+    by = c("strata","sex","len")
+  )
+)), by = .(metric), .SDcols = c("strata","sex","len")]
+
+list(
+  n_point = nrow(point),
+  n_boot = nrow(boot),
+  metrics = sort(unique(point$metric)),
+  catch_sum = point[metric == "catch_at_age", sum(value, na.rm = TRUE)],
+  missing_by_metric = missing_by_metric,
+  missing_age_by_metric = missing_age_by_metric,
+  missing_len_by_metric = missing_len_by_metric
+)
+```
+
+# Next steps
+
+1. Implement `R/sampler_refactor.R` using data.table.
+2. Validate against existing ADMB outputs for 1–2 years.
+3. Add benchmark section (runtime, memory, row counts).
+

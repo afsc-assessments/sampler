@@ -1,0 +1,11 @@
+^cases$
+^admb$
+^src$
+^index_files$
+^example$
+^results$
+^index\.html$
+^index\.knit\.md$
+^\.git$
+^\.gitignore$
+^\.DS_Store$
