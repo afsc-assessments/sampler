@@ -218,6 +218,42 @@ $$
 
 This maps observed length composition to age composition.
 
+## Conditional ALK fallback for sparse cells
+
+The ADMB implementation uses a fallback hierarchy when age data are missing within a given stratum/sex/length cell.
+
+Let $n_{y,k,s,l,a}$ be age counts for year $y$, stratum $k$, sex $s$, length bin $l$, age $a$.
+Define three normalized ALKs at each length:
+
+$$
+A^{(G)}_{y,l,a} =
+\begin{cases}
+\dfrac{n_{y,\cdot,\cdot,l,a}}{\sum_{a'} n_{y,\cdot,\cdot,l,a'}}, & \sum_{a'} n_{y,\cdot,\cdot,l,a'} > 0 \\
+0, & \text{otherwise}
+\end{cases}
+$$
+
+$$
+A^{(S)}_{y,s,l,a} =
+\begin{cases}
+\dfrac{n_{y,\cdot,s,l,a}}{\sum_{a'} n_{y,\cdot,s,l,a'}}, & \sum_{a'} n_{y,\cdot,s,l,a'} > 0 \\
+A^{(G)}_{y,l,a}, & \text{otherwise}
+\end{cases}
+$$
+
+$$
+A_{y,k,s,l,a} =
+\begin{cases}
+\dfrac{n_{y,k,s,l,a}}{\sum_{a'} n_{y,k,s,l,a'}}, & \sum_{a'} n_{y,k,s,l,a'} > 0 \\
+A^{(S)}_{y,s,l,a}, & \text{otherwise}
+\end{cases}
+$$
+
+So missing cells are filled as:
+`stratum+sex+length` -> `sex+length` -> `global length`.
+
+If a length bin has no age observations at any stratum or sex, then $A^{(G)}_{y,l,a}=0$ for all $a$, and downstream fallbacks remain zero at that length.
+
 ## Catch-at-length and catch-at-age
 
 Given total catch in numbers $C_{y,s}$:

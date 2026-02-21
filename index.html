@@ -140,10 +140,11 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#length-frequency-proportions" id="toc-length-frequency-proportions" class="nav-link" data-scroll-target="#length-frequency-proportions"><span class="header-section-number">6.1</span> Length-frequency proportions</a></li>
   <li><a href="#age-length-key-alk" id="toc-age-length-key-alk" class="nav-link" data-scroll-target="#age-length-key-alk"><span class="header-section-number">6.2</span> Age-length key (ALK)</a></li>
-  <li><a href="#catch-at-length-and-catch-at-age" id="toc-catch-at-length-and-catch-at-age" class="nav-link" data-scroll-target="#catch-at-length-and-catch-at-age"><span class="header-section-number">6.3</span> Catch-at-length and catch-at-age</a></li>
-  <li><a href="#mean-weight-at-age-and-mean-weight-at-length" id="toc-mean-weight-at-age-and-mean-weight-at-length" class="nav-link" data-scroll-target="#mean-weight-at-age-and-mean-weight-at-length"><span class="header-section-number">6.4</span> Mean weight-at-age and mean weight-at-length</a></li>
-  <li><a href="#strata-roll-up-in-output-files" id="toc-strata-roll-up-in-output-files" class="nav-link" data-scroll-target="#strata-roll-up-in-output-files"><span class="header-section-number">6.5</span> Strata roll-up in output files</a></li>
-  <li><a href="#bootstrap-summary-statistics" id="toc-bootstrap-summary-statistics" class="nav-link" data-scroll-target="#bootstrap-summary-statistics"><span class="header-section-number">6.6</span> Bootstrap summary statistics</a></li>
+  <li><a href="#conditional-alk-fallback-for-sparse-cells" id="toc-conditional-alk-fallback-for-sparse-cells" class="nav-link" data-scroll-target="#conditional-alk-fallback-for-sparse-cells"><span class="header-section-number">6.3</span> Conditional ALK fallback for sparse cells</a></li>
+  <li><a href="#catch-at-length-and-catch-at-age" id="toc-catch-at-length-and-catch-at-age" class="nav-link" data-scroll-target="#catch-at-length-and-catch-at-age"><span class="header-section-number">6.4</span> Catch-at-length and catch-at-age</a></li>
+  <li><a href="#mean-weight-at-age-and-mean-weight-at-length" id="toc-mean-weight-at-age-and-mean-weight-at-length" class="nav-link" data-scroll-target="#mean-weight-at-age-and-mean-weight-at-length"><span class="header-section-number">6.5</span> Mean weight-at-age and mean weight-at-length</a></li>
+  <li><a href="#strata-roll-up-in-output-files" id="toc-strata-roll-up-in-output-files" class="nav-link" data-scroll-target="#strata-roll-up-in-output-files"><span class="header-section-number">6.6</span> Strata roll-up in output files</a></li>
+  <li><a href="#bootstrap-summary-statistics" id="toc-bootstrap-summary-statistics" class="nav-link" data-scroll-target="#bootstrap-summary-statistics"><span class="header-section-number">6.7</span> Bootstrap summary statistics</a></li>
   </ul></li>
   <li><a href="#casesebswpsam-focus" id="toc-casesebswpsam-focus" class="nav-link" data-scroll-target="#casesebswpsam-focus"><span class="header-section-number">7</span> <code>cases/ebswpSAM</code> Focus</a>
   <ul class="collapse">
@@ -451,8 +452,36 @@ P(a \mid l, y, s) = \frac{n_{y,s,a,l}}{\sum_{a'} n_{y,s,a',l}}
 \]</span></p>
 <p>This maps observed length composition to age composition.</p>
 </section>
-<section id="catch-at-length-and-catch-at-age" class="level2" data-number="6.3">
-<h2 data-number="6.3" class="anchored" data-anchor-id="catch-at-length-and-catch-at-age"><span class="header-section-number">6.3</span> Catch-at-length and catch-at-age</h2>
+<section id="conditional-alk-fallback-for-sparse-cells" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="conditional-alk-fallback-for-sparse-cells"><span class="header-section-number">6.3</span> Conditional ALK fallback for sparse cells</h2>
+<p>The ADMB implementation uses a fallback hierarchy when age data are missing within a given stratum/sex/length cell.</p>
+<p>Let <span class="math inline">\(n_{y,k,s,l,a}\)</span> be age counts for year <span class="math inline">\(y\)</span>, stratum <span class="math inline">\(k\)</span>, sex <span class="math inline">\(s\)</span>, length bin <span class="math inline">\(l\)</span>, age <span class="math inline">\(a\)</span>. Define three normalized ALKs at each length:</p>
+<p><span class="math display">\[
+A^{(G)}_{y,l,a} =
+\begin{cases}
+\dfrac{n_{y,\cdot,\cdot,l,a}}{\sum_{a'} n_{y,\cdot,\cdot,l,a'}}, &amp; \sum_{a'} n_{y,\cdot,\cdot,l,a'} &gt; 0 \\
+0, &amp; \text{otherwise}
+\end{cases}
+\]</span></p>
+<p><span class="math display">\[
+A^{(S)}_{y,s,l,a} =
+\begin{cases}
+\dfrac{n_{y,\cdot,s,l,a}}{\sum_{a'} n_{y,\cdot,s,l,a'}}, &amp; \sum_{a'} n_{y,\cdot,s,l,a'} &gt; 0 \\
+A^{(G)}_{y,l,a}, &amp; \text{otherwise}
+\end{cases}
+\]</span></p>
+<p><span class="math display">\[
+A_{y,k,s,l,a} =
+\begin{cases}
+\dfrac{n_{y,k,s,l,a}}{\sum_{a'} n_{y,k,s,l,a'}}, &amp; \sum_{a'} n_{y,k,s,l,a'} &gt; 0 \\
+A^{(S)}_{y,s,l,a}, &amp; \text{otherwise}
+\end{cases}
+\]</span></p>
+<p>So missing cells are filled as: <code>stratum+sex+length</code> -&gt; <code>sex+length</code> -&gt; <code>global length</code>.</p>
+<p>If a length bin has no age observations at any stratum or sex, then <span class="math inline">\(A^{(G)}_{y,l,a}=0\)</span> for all <span class="math inline">\(a\)</span>, and downstream fallbacks remain zero at that length.</p>
+</section>
+<section id="catch-at-length-and-catch-at-age" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="catch-at-length-and-catch-at-age"><span class="header-section-number">6.4</span> Catch-at-length and catch-at-age</h2>
 <p>Given total catch in numbers <span class="math inline">\(C_{y,s}\)</span>:</p>
 <p><span class="math display">\[
 C_{y,s,l} = C_{y,s} \cdot p_{y,s,l}
@@ -462,8 +491,8 @@ C_{y,s,l} = C_{y,s} \cdot p_{y,s,l}
 C_{y,s,a} = \sum_l C_{y,s,l} \cdot P(a \mid l, y, s)
 \]</span></p>
 </section>
-<section id="mean-weight-at-age-and-mean-weight-at-length" class="level2" data-number="6.4">
-<h2 data-number="6.4" class="anchored" data-anchor-id="mean-weight-at-age-and-mean-weight-at-length"><span class="header-section-number">6.4</span> Mean weight-at-age and mean weight-at-length</h2>
+<section id="mean-weight-at-age-and-mean-weight-at-length" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="mean-weight-at-age-and-mean-weight-at-length"><span class="header-section-number">6.5</span> Mean weight-at-age and mean weight-at-length</h2>
 <p>For sampled weights <span class="math inline">\(w_i\)</span>:</p>
 <p><span class="math display">\[
 \bar{w}_{y,s,a} = \frac{1}{N_{y,s,a}} \sum_{i=1}^{N_{y,s,a}} w_i
@@ -472,8 +501,8 @@ C_{y,s,a} = \sum_l C_{y,s,l} \cdot P(a \mid l, y, s)
 \bar{w}_{y,s,l} = \frac{1}{N_{y,s,l}} \sum_{i=1}^{N_{y,s,l}} w_i
 \]</span></p>
 </section>
-<section id="strata-roll-up-in-output-files" class="level2" data-number="6.5">
-<h2 data-number="6.5" class="anchored" data-anchor-id="strata-roll-up-in-output-files"><span class="header-section-number">6.5</span> Strata roll-up in output files</h2>
+<section id="strata-roll-up-in-output-files" class="level2" data-number="6.6">
+<h2 data-number="6.6" class="anchored" data-anchor-id="strata-roll-up-in-output-files"><span class="header-section-number">6.6</span> Strata roll-up in output files</h2>
 <p>In <code>results/Est_&lt;year&gt;.dat</code>, rows are stored as <code>year type stratum sex age value</code> with:</p>
 <ul>
 <li><code>stratum = 1..H</code> for explicit strata,</li>
@@ -506,8 +535,8 @@ N_{y,99,99,a} = \sum_k \sum_s N_{y,k,s,a}
 \]</span></p>
 <p>So the annual/combined output is a stratum-weighted aggregation, not an unweighted average across strata.</p>
 </section>
-<section id="bootstrap-summary-statistics" class="level2" data-number="6.6">
-<h2 data-number="6.6" class="anchored" data-anchor-id="bootstrap-summary-statistics"><span class="header-section-number">6.6</span> Bootstrap summary statistics</h2>
+<section id="bootstrap-summary-statistics" class="level2" data-number="6.7">
+<h2 data-number="6.7" class="anchored" data-anchor-id="bootstrap-summary-statistics"><span class="header-section-number">6.7</span> Bootstrap summary statistics</h2>
 <p>From bootstrap replicates <span class="math inline">\(\theta^{(b)}\)</span>, <span class="math inline">\(b = 1,\dots,B\)</span>:</p>
 <p><span class="math display">\[
 \hat{\mu}_\theta = \frac{1}{B} \sum_{b=1}^{B} \theta^{(b)}
