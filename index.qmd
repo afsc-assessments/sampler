@@ -244,6 +244,50 @@ $$
 \bar{w}_{y,s,l} = \frac{1}{N_{y,s,l}} \sum_{i=1}^{N_{y,s,l}} w_i
 $$
 
+## Strata roll-up in output files
+
+In `results/Est_<year>.dat`, rows are stored as `year type stratum sex age value` with:
+
+- `stratum = 1..H` for explicit strata,
+- `stratum = 99` for all-strata aggregate,
+- `sex = 99` for both-sex aggregate.
+
+For stratum $k$, sex $s$, and age $a$, numbers-at-age are:
+
+$$
+N_{y,k,s,a} = \sum_l \mathrm{LF}_{y,k,s,l}\, \mathrm{ALK}_{y,k,s,l,a}
+$$
+
+where $\mathrm{LF}$ is the stratum-specific length frequency and $\mathrm{ALK}$ is the stratum-specific age-length key.
+
+Define stratum-sex-age biomass-at-age as:
+
+$$
+B_{y,k,s,a} = \sum_l \left(\mathrm{LF}_{y,k,s,l}\,\bar{w}_{y,k,s,l}\right)\, \mathrm{ALK}_{y,k,s,l,a}
+$$
+
+and mean weight-at-age as:
+
+$$
+\bar{w}_{y,k,s,a} = \frac{B_{y,k,s,a}}{N_{y,k,s,a}}
+$$
+
+Roll-up equations used for `stratum=99` and/or `sex=99` are:
+
+$$
+N_{y,k,99,a} = \sum_s N_{y,k,s,a}, \qquad
+N_{y,99,s,a} = \sum_k N_{y,k,s,a}, \qquad
+N_{y,99,99,a} = \sum_k \sum_s N_{y,k,s,a}
+$$
+
+$$
+\bar{w}_{y,99,99,a} =
+\frac{\sum_k \sum_s N_{y,k,s,a}\,\bar{w}_{y,k,s,a}}
+{\sum_k \sum_s N_{y,k,s,a}}
+$$
+
+So the annual/combined output is a stratum-weighted aggregation, not an unweighted average across strata.
+
 ## Bootstrap summary statistics
 
 From bootstrap replicates $\theta^{(b)}$, $b = 1,\dots,B$:

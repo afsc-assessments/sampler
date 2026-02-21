@@ -142,7 +142,8 @@ window.Quarto = {
   <li><a href="#age-length-key-alk" id="toc-age-length-key-alk" class="nav-link" data-scroll-target="#age-length-key-alk"><span class="header-section-number">6.2</span> Age-length key (ALK)</a></li>
   <li><a href="#catch-at-length-and-catch-at-age" id="toc-catch-at-length-and-catch-at-age" class="nav-link" data-scroll-target="#catch-at-length-and-catch-at-age"><span class="header-section-number">6.3</span> Catch-at-length and catch-at-age</a></li>
   <li><a href="#mean-weight-at-age-and-mean-weight-at-length" id="toc-mean-weight-at-age-and-mean-weight-at-length" class="nav-link" data-scroll-target="#mean-weight-at-age-and-mean-weight-at-length"><span class="header-section-number">6.4</span> Mean weight-at-age and mean weight-at-length</a></li>
-  <li><a href="#bootstrap-summary-statistics" id="toc-bootstrap-summary-statistics" class="nav-link" data-scroll-target="#bootstrap-summary-statistics"><span class="header-section-number">6.5</span> Bootstrap summary statistics</a></li>
+  <li><a href="#strata-roll-up-in-output-files" id="toc-strata-roll-up-in-output-files" class="nav-link" data-scroll-target="#strata-roll-up-in-output-files"><span class="header-section-number">6.5</span> Strata roll-up in output files</a></li>
+  <li><a href="#bootstrap-summary-statistics" id="toc-bootstrap-summary-statistics" class="nav-link" data-scroll-target="#bootstrap-summary-statistics"><span class="header-section-number">6.6</span> Bootstrap summary statistics</a></li>
   </ul></li>
   <li><a href="#casesebswpsam-focus" id="toc-casesebswpsam-focus" class="nav-link" data-scroll-target="#casesebswpsam-focus"><span class="header-section-number">7</span> <code>cases/ebswpSAM</code> Focus</a>
   <ul class="collapse">
@@ -471,8 +472,42 @@ C_{y,s,a} = \sum_l C_{y,s,l} \cdot P(a \mid l, y, s)
 \bar{w}_{y,s,l} = \frac{1}{N_{y,s,l}} \sum_{i=1}^{N_{y,s,l}} w_i
 \]</span></p>
 </section>
-<section id="bootstrap-summary-statistics" class="level2" data-number="6.5">
-<h2 data-number="6.5" class="anchored" data-anchor-id="bootstrap-summary-statistics"><span class="header-section-number">6.5</span> Bootstrap summary statistics</h2>
+<section id="strata-roll-up-in-output-files" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="strata-roll-up-in-output-files"><span class="header-section-number">6.5</span> Strata roll-up in output files</h2>
+<p>In <code>results/Est_&lt;year&gt;.dat</code>, rows are stored as <code>year type stratum sex age value</code> with:</p>
+<ul>
+<li><code>stratum = 1..H</code> for explicit strata,</li>
+<li><code>stratum = 99</code> for all-strata aggregate,</li>
+<li><code>sex = 99</code> for both-sex aggregate.</li>
+</ul>
+<p>For stratum <span class="math inline">\(k\)</span>, sex <span class="math inline">\(s\)</span>, and age <span class="math inline">\(a\)</span>, numbers-at-age are:</p>
+<p><span class="math display">\[
+N_{y,k,s,a} = \sum_l \mathrm{LF}_{y,k,s,l}\, \mathrm{ALK}_{y,k,s,l,a}
+\]</span></p>
+<p>where <span class="math inline">\(\mathrm{LF}\)</span> is the stratum-specific length frequency and <span class="math inline">\(\mathrm{ALK}\)</span> is the stratum-specific age-length key.</p>
+<p>Define stratum-sex-age biomass-at-age as:</p>
+<p><span class="math display">\[
+B_{y,k,s,a} = \sum_l \left(\mathrm{LF}_{y,k,s,l}\,\bar{w}_{y,k,s,l}\right)\, \mathrm{ALK}_{y,k,s,l,a}
+\]</span></p>
+<p>and mean weight-at-age as:</p>
+<p><span class="math display">\[
+\bar{w}_{y,k,s,a} = \frac{B_{y,k,s,a}}{N_{y,k,s,a}}
+\]</span></p>
+<p>Roll-up equations used for <code>stratum=99</code> and/or <code>sex=99</code> are:</p>
+<p><span class="math display">\[
+N_{y,k,99,a} = \sum_s N_{y,k,s,a}, \qquad
+N_{y,99,s,a} = \sum_k N_{y,k,s,a}, \qquad
+N_{y,99,99,a} = \sum_k \sum_s N_{y,k,s,a}
+\]</span></p>
+<p><span class="math display">\[
+\bar{w}_{y,99,99,a} =
+\frac{\sum_k \sum_s N_{y,k,s,a}\,\bar{w}_{y,k,s,a}}
+{\sum_k \sum_s N_{y,k,s,a}}
+\]</span></p>
+<p>So the annual/combined output is a stratum-weighted aggregation, not an unweighted average across strata.</p>
+</section>
+<section id="bootstrap-summary-statistics" class="level2" data-number="6.6">
+<h2 data-number="6.6" class="anchored" data-anchor-id="bootstrap-summary-statistics"><span class="header-section-number">6.6</span> Bootstrap summary statistics</h2>
 <p>From bootstrap replicates <span class="math inline">\(\theta^{(b)}\)</span>, <span class="math inline">\(b = 1,\dots,B\)</span>:</p>
 <p><span class="math display">\[
 \hat{\mu}_\theta = \frac{1}{B} \sum_{b=1}^{B} \theta^{(b)}
