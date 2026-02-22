@@ -2823,15 +2823,15 @@ N_{y,99,99,a} = \sum_k \sum_s N_{y,k,s,a}
 <section id="alternate-generated-data-run-casesebswpsammakefile" class="level2" data-number="7.2">
 <h2 data-number="7.2" class="anchored" data-anchor-id="alternate-generated-data-run-casesebswpsammakefile"><span class="header-section-number">7.2</span> Alternate: generated-data run (<code>cases/ebswpSAM/Makefile</code>)</h2>
 <p><code>cases/ebswpSAM/Makefile</code> runs:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./sam</span> <span class="at">-ind</span> data/sam_<span class="op">&lt;</span>year<span class="op">&gt;</span>.dat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./sam</span> <span class="at">-ind</span> data/sam<span class="op">&lt;</span>year<span class="op">&gt;</span>.dat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Example:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> yr=2024</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Use this only when <code>data/sam_&lt;year&gt;.dat</code> exists (underscore form). Archived fishery controls are named <code>sam&lt;year&gt;.dat</code> (no underscore).</p>
+<p>Use this when <code>data/sam&lt;year&gt;.dat</code> exists (no underscore naming).</p>
 </section>
 <section id="consolidated-driver-year-ranges" class="level2" data-number="7.3">
 <h2 data-number="7.3" class="anchored" data-anchor-id="consolidated-driver-year-ranges"><span class="header-section-number">7.3</span> Consolidated driver (year ranges)</h2>
-<p>Use the single fishery driver to run ADMB over <code>data/fishery/samYYYY.dat</code> and write a rolled-up summary CSV:</p>
+<p>Use the single fishery driver to run ADMB over <code>data/samYYYY.dat</code> and write a rolled-up summary CSV:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> EBS_sampler_fishery.R start_year=1991 end_year=2024 nbs=1 levels=1,1,1,1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Common options:</p>

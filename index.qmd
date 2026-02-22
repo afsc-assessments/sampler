@@ -385,7 +385,7 @@ R -q -e "source('../../../R/sampler_refactor.R'); run_sampler_refactor('sam2024.
 `cases/ebswpSAM/Makefile` runs:
 
 ```bash
-./sam -ind data/sam_<year>.dat
+./sam -ind data/sam<year>.dat
 ```
 
 Example:
@@ -395,11 +395,11 @@ cd cases/ebswpSAM
 make yr=2024
 ```
 
-Use this only when `data/sam_<year>.dat` exists (underscore form). Archived fishery controls are named `sam<year>.dat` (no underscore).
+Use this when `data/sam<year>.dat` exists (no underscore naming).
 
 ## Consolidated driver (year ranges)
 
-Use the single fishery driver to run ADMB over `data/fishery/samYYYY.dat` and write a rolled-up summary CSV:
+Use the single fishery driver to run ADMB over `data/samYYYY.dat` and write a rolled-up summary CSV:
 
 ```bash
 cd cases/ebswpSAM
