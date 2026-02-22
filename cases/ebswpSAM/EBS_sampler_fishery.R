@@ -75,14 +75,14 @@ discover_control_years <- function(fishery_dir) {
 
 #' Write `bs_setup.dat` bootstrap controls
 #'
-#' @param fishery_dir Directory where `bs_setup.dat` will be written.
+#' @param case_dir Case directory where `bs_setup.dat` will be written.
 #' @param nbs Number of bootstrap replicates.
 #' @param levels Numeric vector of four sampling-level controls.
 #'
 #' @return Path to the written `bs_setup.dat` file.
-write_bs_setup <- function(fishery_dir, nbs, levels) {
+write_bs_setup <- function(case_dir, nbs, levels) {
   stopifnot(length(levels) == 4)
-  path <- file.path(fishery_dir, "bs_setup.dat")
+  path <- file.path(case_dir, "bs_setup.dat")
   lines <- c(as.integer(nbs), as.numeric(levels))
   writeLines(as.character(lines), con = path)
   path
@@ -91,26 +91,35 @@ write_bs_setup <- function(fishery_dir, nbs, levels) {
 #' Run ADMB sampler for one control year
 #'
 #' @param year Integer year matching a `samYYYY.dat` file.
-#' @param fishery_dir Directory containing control/data files.
+#' @param case_dir Case directory used as working directory for ADMB.
+#' @param fishery_dir Directory containing `samYYYY.dat` control files.
 #' @param sam_bin Path to ADMB `sam` executable.
 #' @param io Logical; if `TRUE`, pass `-nox -io`.
 #' @param verbose Logical; emit per-year status messages.
 #'
 #' @return Invisibly returns `TRUE` on success.
-run_sampler_year <- function(year, fishery_dir, sam_bin, io = FALSE, verbose = TRUE) {
+run_sampler_year <- function(year, case_dir, fishery_dir, sam_bin, io = FALSE, verbose = TRUE) {
   ctl <- sprintf("sam%d.dat", year)
   ctl_path <- file.path(fishery_dir, ctl)
   if (!file.exists(ctl_path)) {
     stop(sprintf("Control file not found: %s", ctl_path))
   }
+  est_path <- file.path(case_dir, "results", sprintf("Est_%d.dat", year))
 
-  args <- c(if (io) c("-nox", "-io"), "-ind", ctl)
+  data_dir <- normalizePath(file.path(case_dir, "data"), mustWork = FALSE)
+  ctl_arg <- if (normalizePath(fishery_dir) == data_dir) {
+    file.path("data", ctl)
+  } else {
+    ctl_path
+  }
+
+  args <- c(if (io) c("-nox", "-io"), "-ind", ctl_arg)
 
   old_wd <- getwd()
   on.exit(setwd(old_wd), add = TRUE)
-  setwd(fishery_dir)
+  setwd(case_dir)
 
-  out <- system2(sam_bin, args = args, stdout = TRUE, stderr = TRUE)
+  out <- suppressWarnings(system2(sam_bin, args = args, stdout = TRUE, stderr = TRUE))
   status <- attr(out, "status")
   if (is.null(status)) {
     status <- 0
@@ -121,6 +130,14 @@ run_sampler_year <- function(year, fishery_dir, sam_bin, io = FALSE, verbose = T
   }
 
   if (status != 0) {
+    wrote_est <- file.exists(est_path)
+    if (wrote_est) {
+      if (verbose) {
+        message(sprintf("Year %d: accepting non-zero sam status because %s was written", year, est_path))
+      }
+      return(invisible(TRUE))
+    }
+
     msg <- paste(out, collapse = "\n")
     stop(sprintf("sam failed for year %d\n%s", year, msg))
   }
@@ -131,11 +148,11 @@ run_sampler_year <- function(year, fishery_dir, sam_bin, io = FALSE, verbose = T
 #' Read one `Est_<year>.dat` output file
 #'
 #' @param year Integer year to read.
-#' @param fishery_dir Directory containing `results/`.
+#' @param case_dir Case directory containing `results/`.
 #'
 #' @return `data.table` with estimate rows, or `NULL` if file is missing.
-read_estimates <- function(year, fishery_dir) {
-  path <- file.path(fishery_dir, "results", sprintf("Est_%d.dat", year))
+read_estimates <- function(year, case_dir) {
+  path <- file.path(case_dir, "results", sprintf("Est_%d.dat", year))
   if (!file.exists(path)) {
     return(NULL)
   }
@@ -201,7 +218,7 @@ summarize_estimates <- function(est_dt) {
 #' @param nbs Integer bootstrap count for `bs_setup.dat`.
 #' @param levels Numeric length-4 vector for sampling controls in `bs_setup.dat`.
 #' @param io Logical; if `TRUE`, pass `-nox -io` to ADMB `sam`.
-#' @param fishery_dir Optional directory containing `samYYYY.dat`; defaults to `data/fishery` next to this script.
+#' @param fishery_dir Optional directory containing `samYYYY.dat`; defaults to `data` next to this script.
 #' @param sam_bin Optional path to ADMB `sam`; defaults to `../../src/sam` from this script.
 #' @param summary_csv Optional output path for summary CSV.
 #' @param verbose Logical; if `TRUE`, print progress messages.
@@ -219,15 +236,15 @@ run_ebswp_fishery <- function(
   summary_csv = NULL,
   verbose = TRUE
 ) {
-  script_dir <- get_script_dir()
+  case_dir <- get_script_dir()
 
   if (is.null(fishery_dir)) {
-    fishery_dir <- file.path(script_dir, "data", "fishery")
+    fishery_dir <- file.path(case_dir, "data")
   }
   fishery_dir <- normalizePath(fishery_dir)
 
   if (is.null(sam_bin)) {
-    sam_bin <- normalizePath(file.path(script_dir, "..", "..", "src", "sam"), mustWork = FALSE)
+    sam_bin <- normalizePath(file.path(case_dir, "..", "..", "src", "sam"), mustWork = FALSE)
   }
 
   all_years <- discover_control_years(fishery_dir)
@@ -248,7 +265,7 @@ run_ebswp_fishery <- function(
   }
 
   if (is.null(summary_csv)) {
-    summary_csv <- file.path(fishery_dir, "results", "ebswp_est_summary.csv")
+    summary_csv <- file.path(case_dir, "results", "ebswp_est_summary.csv")
   }
 
   if (run_sampler) {
@@ -256,15 +273,22 @@ run_ebswp_fishery <- function(
       stop(sprintf("sam binary not found: %s", sam_bin))
     }
 
-    dir.create(file.path(fishery_dir, "results"), recursive = TRUE, showWarnings = FALSE)
-    write_bs_setup(fishery_dir, nbs = as.integer(nbs), levels = as.numeric(levels))
+    dir.create(file.path(case_dir, "results"), recursive = TRUE, showWarnings = FALSE)
+    write_bs_setup(case_dir, nbs = as.integer(nbs), levels = as.numeric(levels))
 
     for (yr in years) {
-      run_sampler_year(yr, fishery_dir = fishery_dir, sam_bin = sam_bin, io = io, verbose = verbose)
+      run_sampler_year(
+        yr,
+        case_dir = case_dir,
+        fishery_dir = fishery_dir,
+        sam_bin = sam_bin,
+        io = io,
+        verbose = verbose
+      )
     }
   }
 
-  est_list <- lapply(years, read_estimates, fishery_dir = fishery_dir)
+  est_list <- lapply(years, read_estimates, case_dir = case_dir)
   est_list <- Filter(Negate(is.null), est_list)
 
   if (length(est_list) == 0) {

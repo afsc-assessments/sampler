@@ -1,5 +1,5 @@
-#if !defined(_SAM_)
-#  define _SAM_
+#if !defined(_sam_)
+#  define _sam_
 
 class model_data : public ad_comm{
   int do_check;

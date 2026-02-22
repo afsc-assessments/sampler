@@ -583,6 +583,11 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
 void model_parameters::userfunction(void)
 {
   obj_fun =0.0;
+#ifdef DEBUG
+  std::cout << "DEBUG: Total gradient stack used is " << gradient_structure::get()->GRAD_STACK1->total() << " out of " << gradient_structure::get_GRADSTACK_BUFFER_SIZE() << std::endl;;
+  std::cout << "DEBUG: Total dvariable address used is " << gradient_structure::get()->GRAD_LIST->total_addresses() << " out of " << gradient_structure::get_MAX_DLINKS() << std::endl;;
+  std::cout << "DEBUG: Total dvariable address used is " << gradient_structure::get()->ARR_LIST1->get_max_last_offset() << " out of " << gradient_structure::get_ARRAY_MEMBLOCK_SIZE() << std::endl;;
+#endif
 }
 
 void model_parameters::report(const dvector& gradients)
@@ -639,7 +644,7 @@ std::feclearexcept(FE_ALL_EXCEPT);
     gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
     if (!arrmblsize) arrmblsize=15000000;
     model_parameters mp(arrmblsize,argc,argv);
-    mp.iprint=10;
+    mp.iprint = defaults::iprint;
     mp.preliminary_calculations();
     mp.computations(argc,argv);
 #ifdef DEBUG

@@ -29,7 +29,7 @@ mpd: $(EXEC)
 
 yrs:
 	number=$(yr1) ; while [[ $$number -le $(yr2) ]] ; do \
-   	echo data/sam_$$number\.dat ; \
+   	echo data/sam$$number\.dat ; \
    	((number = number + 1)) ; \
 	done
 
