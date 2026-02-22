@@ -25,7 +25,7 @@ $(DIST)$(EXEC).tpl:
 	$(MAKE) --directory=../../src
 
 mpd: $(EXEC)
-		./$(EXEC) $(ARGS) data/sam_$(yr).dat
+		./$(EXEC) $(ARGS) data/sam$(yr).dat
 
 yrs:
 	number=$(yr1) ; while [[ $$number -le $(yr2) ]] ; do \
