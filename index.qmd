@@ -455,9 +455,9 @@ Rscript EBS_sampler_fishery.R start_year=1991 end_year=2024 run_sampler=false
 - Several legacy scripts in this case directory contain machine-specific `setwd()`/`source()` paths and may need local edits before execution.
 - Some scripts reference `sampleR/R/sampler_EBSwp.R`; verify that file exists in your local clone or update the `source()` target to the intended sampler helper.
 
-# Query-Based Data Preparation (Legacy)
+# Query-Based Data Preparation 
 
-Legacy query scripts live in `R/`:
+These query scripts live in `R/`:
 
 - `R/CallQueriesForSamplerData.R`
 - `R/QueryAgesForSampler.R`
@@ -466,7 +466,7 @@ Legacy query scripts live in `R/`:
 
 These use AFSC/AKFIN ODBC connections and keyring credentials to generate `age*.dat`, `len*.dat`, and `sam*.dat` files.
 
-# Appendix: ebswpSAM Fishery Driver API (Roxygen)
+# Appendix: (Roxygen)
 
 Source: `cases/ebswpSAM/EBS_sampler_fishery.R`
 
