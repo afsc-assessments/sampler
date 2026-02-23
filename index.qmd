@@ -13,6 +13,8 @@ execute:
   message: false
 ---
 
+[GitHub: afsc-assessments/sampler](https://github.com/afsc-assessments/sampler)
+
 # Overview
 
 This repository contains two operational paths for generating sampler outputs:
