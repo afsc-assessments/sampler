@@ -27,6 +27,7 @@ run_ebswp_fishery(
   levels = levels,
   io = as_bool(args$io, default = FALSE),
   fishery_dir = args$fishery_dir,
+  control_pattern = if (!is.null(args$control_pattern)) args$control_pattern else "^sam[0-9]{4}\\.dat$",
   sam_bin = args$sam_bin,
   summary_csv = args$summary_csv,
   verbose = as_bool(args$verbose, default = TRUE)

@@ -2691,12 +2691,12 @@ P(a \mid l, y, s) = \frac{n_{y,s,a,l}}{\sum_{a&#39;} n_{y,s,a&#39;,l}}
 </section>
 <section id="ftnir-to-tma-age-mapping-2024-onward" class="level2" data-number="6.3">
 <h2 data-number="6.3" class="anchored" data-anchor-id="ftnir-to-tma-age-mapping-2024-onward"><span class="header-section-number">6.3</span> FTNIR-to-TMA age mapping (2024 onward)</h2>
-<p>Beginning in 2024, FTNIR ages are first mapped to traditional microscope ages (TMA) using an age-age key, analogous to an age-length key.</p>
+<p>Beginning in 2024, FTNIR ages are first mapped to traditional microscope ages (TMA) using an age-age key, analogous to an age-length key. In this step, FTNIR and TMA data are sex-aggregated.</p>
 <p>For FTNIR age <span class="math inline">\(a_F\)</span> and TMA age <span class="math inline">\(a_T\)</span>:</p>
 <p><span class="math display">\[
-P(a_T \mid a_F, y, s) = \frac{n_{y,s,a_F,a_T}}{\sum_{a_T&#39;} n_{y,s,a_F,a_T&#39;}}
+P(a_T \mid a_F, y) = \frac{n_{y,a_F,a_T}}{\sum_{a_T&#39;} n_{y,a_F,a_T&#39;}}
 \]</span></p>
-<p>where <span class="math inline">\(n_{y,s,a_F,a_T}\)</span> are observed paired readings used to build the key.</p>
+<p>where <span class="math inline">\(n_{y,a_F,a_T}\)</span> are observed paired readings used to build the key.</p>
 <p>In practice, this step converts FTNIR age compositions to TMA-equivalent age compositions first; then the standard sampler workflow proceeds (ALK application, catch-at-age, and roll-ups) using those mapped ages.</p>
 <p>Updated 2024 bootstrap comparisons (FTNIR vs age-error adjusted) are shown below.</p>
 <div class="quarto-figure quarto-figure-center">

@@ -221,15 +221,15 @@ This maps observed length composition to age composition.
 
 ## FTNIR-to-TMA age mapping (2024 onward)
 
-Beginning in 2024, FTNIR ages are first mapped to traditional microscope ages (TMA) using an age-age key, analogous to an age-length key.
+Beginning in 2024, FTNIR ages are first mapped to traditional microscope ages (TMA) using an age-age key, analogous to an age-length key. In this step, FTNIR and TMA data are sex-aggregated.
 
 For FTNIR age $a_F$ and TMA age $a_T$:
 
 $$
-P(a_T \mid a_F, y, s) = \frac{n_{y,s,a_F,a_T}}{\sum_{a_T'} n_{y,s,a_F,a_T'}}
+P(a_T \mid a_F, y) = \frac{n_{y,a_F,a_T}}{\sum_{a_T'} n_{y,a_F,a_T'}}
 $$
 
-where $n_{y,s,a_F,a_T}$ are observed paired readings used to build the key.
+where $n_{y,a_F,a_T}$ are observed paired readings used to build the key.
 
 In practice, this step converts FTNIR age compositions to TMA-equivalent age compositions first; then the standard sampler workflow proceeds (ALK application, catch-at-age, and roll-ups) using those mapped ages.
 

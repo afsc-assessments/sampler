@@ -133,6 +133,69 @@ plot_weight_at_age <- function(wt_age, out_dir, width, height, dpi) {
   ggsave(file.path(out_dir, "weight_at_age_by_year.png"), p, width = width, height = height, dpi = dpi)
 }
 
+read_bootstrap_by_age <- function(path) {
+  if (!file.exists(path)) {
+    return(NULL)
+  }
+
+  dt <- fread(path)
+  req <- c("BS", "IDX", "data")
+  if (!all(req %in% names(dt))) {
+    stop(sprintf("Expected columns BS, IDX, data in %s", path))
+  }
+
+  age_cols <- grep("^[0-9]+$", names(dt), value = TRUE)
+  if (length(age_cols) == 0) {
+    stop(sprintf("No numeric age columns found in %s", path))
+  }
+  dt[, (age_cols) := lapply(.SD, as.numeric), .SDcols = age_cols]
+
+  long <- melt(
+    dt,
+    id.vars = c("BS", "IDX", "data"),
+    measure.vars = age_cols,
+    variable.name = "age",
+    value.name = "value",
+    variable.factor = FALSE
+  )
+
+  long[, age := as.integer(age)]
+  long[, value := as.numeric(value)]
+  long[order(data, BS, age)]
+}
+
+plot_bootstrap_by_data <- function(long_dt, out_path, title_text, y_label, width, height, dpi) {
+  if (is.null(long_dt) || nrow(long_dt) == 0) {
+    return(invisible(NULL))
+  }
+
+  summ <- long_dt[
+    ,
+    .(
+      median = median(value, na.rm = TRUE),
+      p05 = quantile(value, probs = 0.05, na.rm = TRUE),
+      p95 = quantile(value, probs = 0.95, na.rm = TRUE)
+    ),
+    by = .(data, age)
+  ][order(data, age)]
+
+  p <- ggplot(summ, aes(x = age, y = median, color = data, fill = data, group = data)) +
+    geom_ribbon(aes(ymin = p05, ymax = p95), alpha = 0.18, linewidth = 0, show.legend = FALSE) +
+    geom_line(linewidth = 0.9) +
+    geom_point(size = 1.6) +
+    scale_x_continuous(breaks = sort(unique(summ$age))) +
+    labs(
+      title = title_text,
+      x = "Age",
+      y = y_label,
+      color = "Data"
+    ) +
+    theme_bw()
+
+  ggsave(out_path, p, width = width, height = height, dpi = dpi)
+  invisible(summ)
+}
+
 run_plot_results <- function(
   results_dir = NULL,
   out_dir = NULL,
@@ -153,72 +216,105 @@ run_plot_results <- function(
   results_dir <- normalizePath(results_dir)
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
-  est <- read_estimates(results_dir)
-  if (!is.null(start_year)) {
-    est <- est[year >= as.integer(start_year)]
-  }
-  if (!is.null(end_year)) {
-    est <- est[year <= as.integer(end_year)]
-  }
-  if (nrow(est) == 0) {
-    stop("No rows remain after year filtering")
+  est_files <- list.files(results_dir, pattern = "^Est_[0-9]{4}\\.dat$", full.names = TRUE)
+  est <- NULL
+  if (length(est_files) > 0) {
+    est <- read_estimates(results_dir)
+    if (!is.null(start_year)) {
+      est <- est[year >= as.integer(start_year)]
+    }
+    if (!is.null(end_year)) {
+      est <- est[year <= as.integer(end_year)]
+    }
+    if (nrow(est) == 0) {
+      stop("No rows remain after year filtering")
+    }
+
+    n_combined <- est[type == "N" & stratum == 99L & sex == 99L]
+    if (nrow(n_combined) == 0) {
+      stop("No combined N rows found (type='N', stratum=99, sex=99)")
+    }
+
+    n_total <- n_combined[, .(total_n = sum(value, na.rm = TRUE)), by = year][order(year)]
+    mean_age <- n_combined[
+      ,
+      .(
+        mean_age = ifelse(sum(value, na.rm = TRUE) > 0,
+          sum(age * value, na.rm = TRUE) / sum(value, na.rm = TRUE),
+          NA_real_
+        )
+      ),
+      by = year
+    ][order(year)]
+    age_prop <- n_combined[, .(n = sum(value, na.rm = TRUE)), by = .(year, age)]
+    age_prop[, p := ifelse(sum(n, na.rm = TRUE) > 0, n / sum(n, na.rm = TRUE), NA_real_), by = year]
+    age_prop <- age_prop[order(year, age)]
+
+    sex_totals <- est[type == "N" & stratum == 99L & sex %in% c(1L, 2L),
+      .(total_n = sum(value, na.rm = TRUE)),
+      by = .(year, sex)
+    ][order(year, sex)]
+
+    wt_age <- est[type == "avg_wt_age" & stratum == 99L & sex == 99L,
+      .(avg_wt = mean(value, na.rm = TRUE)),
+      by = .(year, age)
+    ][order(year, age)]
+
+    plot_total_numbers(n_total, out_dir, width, height, dpi)
+    plot_mean_age(mean_age, out_dir, width, height, dpi)
+    plot_age_heatmap(age_prop, out_dir, width, height, dpi)
+    if (nrow(sex_totals) > 0) {
+      plot_sex_totals(sex_totals, out_dir, width, height, dpi)
+    }
+    if (nrow(wt_age) > 0) {
+      plot_weight_at_age(wt_age, out_dir, width, height, dpi)
+    }
+
+    summary_dt <- merge(n_total, mean_age, by = "year", all = TRUE)
+    if (nrow(sex_totals) > 0) {
+      male <- sex_totals[sex == 1L, .(year, male_n = total_n)]
+      female <- sex_totals[sex == 2L, .(year, female_n = total_n)]
+      summary_dt <- merge(summary_dt, male, by = "year", all = TRUE)
+      summary_dt <- merge(summary_dt, female, by = "year", all = TRUE)
+    }
+    fwrite(summary_dt[order(year)], file.path(out_dir, "plot_summary.csv"))
+  } else {
+    message(sprintf("No Est_YYYY.dat files found in %s; skipping estimate plots", results_dir))
   }
 
-  n_combined <- est[type == "N" & stratum == 99L & sex == 99L]
-  if (nrow(n_combined) == 0) {
-    stop("No combined N rows found (type='N', stratum=99, sex=99)")
+  wtage_combined <- read_bootstrap_by_age(file.path(results_dir, "wtage2024_combined.csv"))
+  catage_combined <- read_bootstrap_by_age(file.path(results_dir, "catage2024_combined.csv"))
+
+  if (!is.null(wtage_combined)) {
+    plot_bootstrap_by_data(
+      wtage_combined,
+      file.path(out_dir, "wtage2024_by_data.png"),
+      "Weight-at-Age Bootstrap Comparison",
+      "Weight-at-age",
+      width,
+      height,
+      dpi
+    )
   }
 
-  n_total <- n_combined[, .(total_n = sum(value, na.rm = TRUE)), by = year][order(year)]
-  mean_age <- n_combined[
-    ,
-    .(
-      mean_age = ifelse(sum(value, na.rm = TRUE) > 0,
-        sum(age * value, na.rm = TRUE) / sum(value, na.rm = TRUE),
-        NA_real_
-      )
-    ),
-    by = year
-  ][order(year)]
-  age_prop <- n_combined[, .(n = sum(value, na.rm = TRUE)), by = .(year, age)]
-  age_prop[, p := ifelse(sum(n, na.rm = TRUE) > 0, n / sum(n, na.rm = TRUE), NA_real_), by = year]
-  age_prop <- age_prop[order(year, age)]
-
-  sex_totals <- est[type == "N" & stratum == 99L & sex %in% c(1L, 2L),
-    .(total_n = sum(value, na.rm = TRUE)),
-    by = .(year, sex)
-  ][order(year, sex)]
-
-  wt_age <- est[type == "avg_wt_age" & stratum == 99L & sex == 99L,
-    .(avg_wt = mean(value, na.rm = TRUE)),
-    by = .(year, age)
-  ][order(year, age)]
-
-  plot_total_numbers(n_total, out_dir, width, height, dpi)
-  plot_mean_age(mean_age, out_dir, width, height, dpi)
-  plot_age_heatmap(age_prop, out_dir, width, height, dpi)
-  if (nrow(sex_totals) > 0) {
-    plot_sex_totals(sex_totals, out_dir, width, height, dpi)
+  if (!is.null(catage_combined)) {
+    plot_bootstrap_by_data(
+      catage_combined,
+      file.path(out_dir, "catage2024_by_data.png"),
+      "Catch-at-Age Bootstrap Comparison",
+      "Catch-at-age",
+      width,
+      height,
+      dpi
+    )
   }
-  if (nrow(wt_age) > 0) {
-    plot_weight_at_age(wt_age, out_dir, width, height, dpi)
-  }
-
-  summary_dt <- merge(n_total, mean_age, by = "year", all = TRUE)
-  if (nrow(sex_totals) > 0) {
-    male <- sex_totals[sex == 1L, .(year, male_n = total_n)]
-    female <- sex_totals[sex == 2L, .(year, female_n = total_n)]
-    summary_dt <- merge(summary_dt, male, by = "year", all = TRUE)
-    summary_dt <- merge(summary_dt, female, by = "year", all = TRUE)
-  }
-  fwrite(summary_dt[order(year)], file.path(out_dir, "plot_summary.csv"))
 
   message(sprintf("Wrote plots to %s", out_dir))
   invisible(list(
     results_dir = results_dir,
     out_dir = out_dir,
-    years = sort(unique(est$year)),
-    n_rows = nrow(est)
+    years = if (is.null(est)) integer(0) else sort(unique(est$year)),
+    n_rows = if (is.null(est)) 0L else nrow(est)
   ))
 }
 

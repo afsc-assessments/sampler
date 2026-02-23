@@ -62,15 +62,42 @@ parse_cli_args <- function(args) {
   out
 }
 
-#' Discover available sampler control years
+#' Discover control files and metadata
 #'
-#' @param fishery_dir Directory containing `samYYYY.dat` files.
+#' @param fishery_dir Directory containing control files.
+#' @param control_pattern Regex pattern used to select controls.
 #'
-#' @return Integer vector of discovered years in ascending order.
-discover_control_years <- function(fishery_dir) {
-  files <- list.files(fishery_dir, pattern = "^sam[0-9]{4}\\.dat$", full.names = FALSE)
-  years <- as.integer(sub("^sam([0-9]{4})\\.dat$", "\\1", files))
-  sort(years[!is.na(years)])
+#' @return `data.table` with `control_file`, `year`, and `est_rel`.
+discover_controls <- function(fishery_dir, control_pattern = "^sam[0-9]{4}\\.dat$") {
+  files <- list.files(fishery_dir, pattern = control_pattern, full.names = FALSE)
+  if (length(files) == 0) {
+    return(data.table::data.table())
+  }
+
+  out <- data.table::rbindlist(lapply(files, function(f) {
+    p <- file.path(fishery_dir, f)
+    lines <- readLines(p, warn = FALSE)
+    lines <- gsub("\r", "", lines)
+
+    yr <- suppressWarnings(as.integer(trimws(lines[1])))
+    if (is.na(yr)) {
+      yr <- suppressWarnings(as.integer(sub("^.*?([0-9]{4}).*$", "\\1", f)))
+    }
+    est_rel <- if (length(lines) >= 12) trimws(lines[12]) else sprintf("results/Est_%d.dat", yr)
+    if (!nzchar(est_rel)) {
+      est_rel <- sprintf("results/Est_%d.dat", yr)
+    }
+
+    data.table::data.table(
+      control_file = f,
+      year = as.integer(yr),
+      est_rel = est_rel
+    )
+  }), use.names = TRUE, fill = TRUE)
+
+  out <- out[!is.na(year)]
+  data.table::setorder(out, year, control_file)
+  out[]
 }
 
 #' Write `bs_setup.dat` bootstrap controls
@@ -90,7 +117,9 @@ write_bs_setup <- function(case_dir, nbs, levels) {
 
 #' Run ADMB sampler for one control year
 #'
-#' @param year Integer year matching a `samYYYY.dat` file.
+#' @param control_file Control filename (for example `sam2024.dat`).
+#' @param year Integer year label for progress messages.
+#' @param est_rel Output estimate path from control file.
 #' @param case_dir Case directory used as working directory for ADMB.
 #' @param fishery_dir Directory containing `samYYYY.dat` control files.
 #' @param sam_bin Path to ADMB `sam` executable.
@@ -98,17 +127,16 @@ write_bs_setup <- function(case_dir, nbs, levels) {
 #' @param verbose Logical; emit per-year status messages.
 #'
 #' @return Invisibly returns `TRUE` on success.
-run_sampler_year <- function(year, case_dir, fishery_dir, sam_bin, io = FALSE, verbose = TRUE) {
-  ctl <- sprintf("sam%d.dat", year)
-  ctl_path <- file.path(fishery_dir, ctl)
+run_sampler_year <- function(control_file, year, est_rel, case_dir, fishery_dir, sam_bin, io = FALSE, verbose = TRUE) {
+  ctl_path <- file.path(fishery_dir, control_file)
   if (!file.exists(ctl_path)) {
     stop(sprintf("Control file not found: %s", ctl_path))
   }
-  est_path <- file.path(case_dir, "results", sprintf("Est_%d.dat", year))
+  est_path <- file.path(case_dir, est_rel)
 
   data_dir <- normalizePath(file.path(case_dir, "data"), mustWork = FALSE)
   ctl_arg <- if (normalizePath(fishery_dir) == data_dir) {
-    file.path("data", ctl)
+    file.path("data", control_file)
   } else {
     ctl_path
   }
@@ -148,11 +176,12 @@ run_sampler_year <- function(year, case_dir, fishery_dir, sam_bin, io = FALSE, v
 #' Read one `Est_<year>.dat` output file
 #'
 #' @param year Integer year to read.
+#' @param est_rel Estimate path from the control file.
 #' @param case_dir Case directory containing `results/`.
 #'
 #' @return `data.table` with estimate rows, or `NULL` if file is missing.
-read_estimates <- function(year, case_dir) {
-  path <- file.path(case_dir, "results", sprintf("Est_%d.dat", year))
+read_estimates <- function(year, est_rel, case_dir) {
+  path <- file.path(case_dir, est_rel)
   if (!file.exists(path)) {
     return(NULL)
   }
@@ -219,6 +248,7 @@ summarize_estimates <- function(est_dt) {
 #' @param levels Numeric length-4 vector for sampling controls in `bs_setup.dat`.
 #' @param io Logical; if `TRUE`, pass `-nox -io` to ADMB `sam`.
 #' @param fishery_dir Optional directory containing `samYYYY.dat`; defaults to `data` next to this script.
+#' @param control_pattern Regex used to select control files in `fishery_dir`.
 #' @param sam_bin Optional path to ADMB `sam`; defaults to `../../src/sam` from this script.
 #' @param summary_csv Optional output path for summary CSV.
 #' @param verbose Logical; if `TRUE`, print progress messages.
@@ -232,6 +262,7 @@ run_ebswp_fishery <- function(
   levels = c(1, 1, 1, 1),
   io = FALSE,
   fishery_dir = NULL,
+  control_pattern = "^sam[0-9]{4}\\.dat$",
   sam_bin = NULL,
   summary_csv = NULL,
   verbose = TRUE
@@ -247,22 +278,23 @@ run_ebswp_fishery <- function(
     sam_bin <- normalizePath(file.path(case_dir, "..", "..", "src", "sam"), mustWork = FALSE)
   }
 
-  all_years <- discover_control_years(fishery_dir)
-  if (length(all_years) == 0) {
-    stop(sprintf("No control files found in %s", fishery_dir))
+  controls <- discover_controls(fishery_dir, control_pattern = control_pattern)
+  if (nrow(controls) == 0) {
+    stop(sprintf("No control files matched `%s` in %s", control_pattern, fishery_dir))
   }
 
   if (is.null(start_year)) {
-    start_year <- min(all_years)
+    start_year <- min(controls$year)
   }
   if (is.null(end_year)) {
-    end_year <- max(all_years)
+    end_year <- max(controls$year)
   }
 
-  years <- all_years[all_years >= as.integer(start_year) & all_years <= as.integer(end_year)]
-  if (length(years) == 0) {
+  controls <- controls[year >= as.integer(start_year) & year <= as.integer(end_year)]
+  if (nrow(controls) == 0) {
     stop("No matching years after applying start_year/end_year")
   }
+  years <- sort(unique(controls$year))
 
   if (is.null(summary_csv)) {
     summary_csv <- file.path(case_dir, "results", "ebswp_est_summary.csv")
@@ -276,9 +308,12 @@ run_ebswp_fishery <- function(
     dir.create(file.path(case_dir, "results"), recursive = TRUE, showWarnings = FALSE)
     write_bs_setup(case_dir, nbs = as.integer(nbs), levels = as.numeric(levels))
 
-    for (yr in years) {
+    for (i in seq_len(nrow(controls))) {
+      ctl <- controls[i]
       run_sampler_year(
-        yr,
+        control_file = ctl$control_file,
+        year = as.integer(ctl$year),
+        est_rel = ctl$est_rel,
         case_dir = case_dir,
         fishery_dir = fishery_dir,
         sam_bin = sam_bin,
@@ -288,7 +323,10 @@ run_ebswp_fishery <- function(
     }
   }
 
-  est_list <- lapply(years, read_estimates, case_dir = case_dir)
+  est_list <- lapply(seq_len(nrow(controls)), function(i) {
+    ctl <- controls[i]
+    read_estimates(year = as.integer(ctl$year), est_rel = ctl$est_rel, case_dir = case_dir)
+  })
   est_list <- Filter(Negate(is.null), est_list)
 
   if (length(est_list) == 0) {
@@ -332,6 +370,7 @@ if (sys.nframe() == 0) {
     levels = levels,
     io = as_bool(args$io, default = FALSE),
     fishery_dir = args$fishery_dir,
+    control_pattern = if (!is.null(args$control_pattern)) args$control_pattern else "^sam[0-9]{4}\\.dat$",
     sam_bin = args$sam_bin,
     summary_csv = args$summary_csv,
     verbose = as_bool(args$verbose, default = TRUE)
