@@ -385,7 +385,7 @@ cat > bs_setup.dat <<'TXT'
 1
 1
 TXT
-../../../src/sam -ind sam2024.dat
+../../../../src/sam -ind sam2024.dat
 ```
 
 ### R refactor run for one year
