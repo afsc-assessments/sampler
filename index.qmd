@@ -219,6 +219,26 @@ $$
 
 This maps observed length composition to age composition.
 
+## FTNIR-to-TMA age mapping (2024 onward)
+
+Beginning in 2024, FTNIR ages are first mapped to traditional microscope ages (TMA) using an age-age key, analogous to an age-length key.
+
+For FTNIR age $a_F$ and TMA age $a_T$:
+
+$$
+P(a_T \mid a_F, y, s) = \frac{n_{y,s,a_F,a_T}}{\sum_{a_T'} n_{y,s,a_F,a_T'}}
+$$
+
+where $n_{y,s,a_F,a_T}$ are observed paired readings used to build the key.
+
+In practice, this step converts FTNIR age compositions to TMA-equivalent age compositions first; then the standard sampler workflow proceeds (ALK application, catch-at-age, and roll-ups) using those mapped ages.
+
+Updated 2024 bootstrap comparisons (FTNIR vs age-error adjusted) are shown below.
+
+![Weight-at-age bootstrap comparison by data source](cases/ebswpSAM/results/plots/wtage2024_by_data.png)
+
+![Catch-at-age bootstrap comparison by data source](cases/ebswpSAM/results/plots/catage2024_by_data.png)
+
 ## Conditional ALK fallback for sparse cells
 
 The ADMB implementation uses a fallback hierarchy when age data are missing within a given stratum/sex/length cell.
