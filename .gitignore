@@ -8,3 +8,6 @@ pkg/
 samplerrefactor_*.tar.gz
 index_files/
 *.Rcheck/
+
+/.quarto/
+**/*.quarto_ipynb
