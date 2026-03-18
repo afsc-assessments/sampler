@@ -161,6 +161,7 @@ R packages:
 
 - `data.table`
 - `arrow`
+- `ggplot2` (for plotting examples)
 
 ## Recommended Run Commands
 
@@ -175,6 +176,40 @@ Equivalent direct call:
 ```bash
 cd example
 R -q -e "source('../R/sampler_refactor.R'); run_sampler_refactor('sam2020.dat','bs_setup.dat','../results')"
+```
+
+### Example: run and plot catch-at-age
+
+This example runs the refactor and saves a quick diagnostic plot from the tidy Parquet output.
+
+```bash
+cd example
+R -q <<'RS'
+source('../R/sampler_refactor.R')
+run_sampler_refactor('sam2020.dat', 'bs_setup.dat', '../results', 'sampler')
+
+library(arrow)
+library(data.table)
+library(ggplot2)
+
+dt <- as.data.table(read_parquet('../results/sampler_tidy.parquet'))
+plot_dt <- dt[metric == 'catch_at_age' & !is.na(age),
+              .(catch_at_age = sum(value, na.rm = TRUE)),
+              by = .(year, age)][order(age)]
+
+p <- ggplot(plot_dt, aes(x = age, y = catch_at_age)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = sort(unique(plot_dt$age))) +
+  labs(
+    title = sprintf('Sampler refactor catch-at-age (%s)', unique(plot_dt$year)),
+    x = 'Age',
+    y = 'Catch at age'
+  ) +
+  theme_minimal(base_size = 12)
+
+ggsave('../results/sampler_catch_at_age.png', p, width = 7, height = 4, dpi = 150)
+RS
 ```
 
 ## Function Arguments

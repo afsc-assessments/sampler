@@ -2366,7 +2366,10 @@ window.Quarto = {
   <li><a href="#r-refactor-workflow" id="toc-r-refactor-workflow" class="nav-link" data-scroll-target="#r-refactor-workflow"><span class="header-section-number">5</span> R Refactor Workflow</a>
   <ul class="collapse">
   <li><a href="#prerequisites" id="toc-prerequisites" class="nav-link" data-scroll-target="#prerequisites"><span class="header-section-number">5.1</span> Prerequisites</a></li>
-  <li><a href="#recommended-run-commands" id="toc-recommended-run-commands" class="nav-link" data-scroll-target="#recommended-run-commands"><span class="header-section-number">5.2</span> Recommended Run Commands</a></li>
+  <li><a href="#recommended-run-commands" id="toc-recommended-run-commands" class="nav-link" data-scroll-target="#recommended-run-commands"><span class="header-section-number">5.2</span> Recommended Run Commands</a>
+  <ul class="collapse">
+  <li><a href="#example-run-and-plot-catch-at-age" id="toc-example-run-and-plot-catch-at-age" class="nav-link" data-scroll-target="#example-run-and-plot-catch-at-age"><span class="header-section-number">5.2.1</span> Example: run and plot catch-at-age</a></li>
+  </ul></li>
   <li><a href="#function-arguments" id="toc-function-arguments" class="nav-link" data-scroll-target="#function-arguments"><span class="header-section-number">5.3</span> Function Arguments</a></li>
   <li><a href="#r-outputs" id="toc-r-outputs" class="nav-link" data-scroll-target="#r-outputs"><span class="header-section-number">5.4</span> R Outputs</a></li>
   <li><a href="#notes-on-paths" id="toc-notes-on-paths" class="nav-link" data-scroll-target="#notes-on-paths"><span class="header-section-number">5.5</span> Notes on Paths</a></li>
@@ -2614,6 +2617,7 @@ window.Quarto = {
 <ul>
 <li><code>data.table</code></li>
 <li><code>arrow</code></li>
+<li><code>ggplot2</code> (for plotting examples)</li>
 </ul>
 </section>
 <section id="recommended-run-commands" class="level2" data-number="5.2">
@@ -2623,6 +2627,37 @@ window.Quarto = {
 <p>Equivalent direct call:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> example</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> <span class="at">-q</span> <span class="at">-e</span> <span class="st">&quot;source(&#39;../R/sampler_refactor.R&#39;); run_sampler_refactor(&#39;sam2020.dat&#39;,&#39;bs_setup.dat&#39;,&#39;../results&#39;)&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="example-run-and-plot-catch-at-age" class="level3" data-number="5.2.1">
+<h3 data-number="5.2.1" class="anchored" data-anchor-id="example-run-and-plot-catch-at-age"><span class="header-section-number">5.2.1</span> Example: run and plot catch-at-age</h3>
+<p>This example runs the refactor and saves a quick diagnostic plot from the tidy Parquet output.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> example</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> <span class="at">-q</span> <span class="op">&lt;&lt;&#39;RS&#39;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="st">source(&#39;../R/sampler_refactor.R&#39;)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="st">run_sampler_refactor(&#39;sam2020.dat&#39;, &#39;bs_setup.dat&#39;, &#39;../results&#39;, &#39;sampler&#39;)</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="st">library(arrow)</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="st">library(data.table)</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="st">library(ggplot2)</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="st">dt &lt;- as.data.table(read_parquet(&#39;../results/sampler_tidy.parquet&#39;))</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="st">plot_dt &lt;- dt[metric == &#39;catch_at_age&#39; &amp; !is.na(age),</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="st">              .(catch_at_age = sum(value, na.rm = TRUE)),</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="st">              by = .(year, age)][order(age)]</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="st">p &lt;- ggplot(plot_dt, aes(x = age, y = catch_at_age)) +</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="st">  geom_line(linewidth = 0.8) +</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="st">  geom_point(size = 2) +</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="st">  scale_x_continuous(breaks = sort(unique(plot_dt$age))) +</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="st">  labs(</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="st">    title = sprintf(&#39;Sampler refactor catch-at-age (%s)&#39;, unique(plot_dt$year)),</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="st">    x = &#39;Age&#39;,</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="st">    y = &#39;Catch at age&#39;</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="st">  ) +</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="st">  theme_minimal(base_size = 12)</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a><span class="st">ggsave(&#39;../results/sampler_catch_at_age.png&#39;, p, width = 7, height = 4, dpi = 150)</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a><span class="op">RS</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
 </section>
 <section id="function-arguments" class="level2" data-number="5.3">
 <h2 data-number="5.3" class="anchored" data-anchor-id="function-arguments"><span class="header-section-number">5.3</span> Function Arguments</h2>
@@ -2822,43 +2857,43 @@ N_{y,99,99,a} = \sum_k \sum_s N_{y,k,s,a}
 <p>Run from the directory that contains the <code>samYYYY.dat</code> control files so relative <code>age/len</code> filenames resolve correctly.</p>
 <section id="admb-run-for-one-year" class="level3" data-number="7.1.1">
 <h3 data-number="7.1.1" class="anchored" data-anchor-id="admb-run-for-one-year"><span class="header-section-number">7.1.1</span> ADMB run for one year</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM/data/fishery</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> bs_setup.dat <span class="op">&lt;&lt;&#39;TXT&#39;</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="op">TXT</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="ex">../../../src/sam</span> <span class="at">-ind</span> sam2024.dat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM/data/fishery</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> bs_setup.dat <span class="op">&lt;&lt;&#39;TXT&#39;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="st">1</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="op">TXT</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="ex">../../../../src/sam</span> <span class="at">-ind</span> sam2024.dat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="r-refactor-run-for-one-year" class="level3" data-number="7.1.2">
 <h3 data-number="7.1.2" class="anchored" data-anchor-id="r-refactor-run-for-one-year"><span class="header-section-number">7.1.2</span> R refactor run for one year</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM/data/fishery</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> bs_setup.dat <span class="op">&lt;&lt;&#39;TXT&#39;</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="st">1000</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="st">2</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="st">2</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="st">2</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="st">2</span></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="op">TXT</span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> <span class="at">-q</span> <span class="at">-e</span> <span class="st">&quot;source(&#39;../../../R/sampler_refactor.R&#39;); run_sampler_refactor(&#39;sam2024.dat&#39;,&#39;bs_setup.dat&#39;,&#39;results&#39;,&#39;ebswp&#39;)&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM/data/fishery</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> bs_setup.dat <span class="op">&lt;&lt;&#39;TXT&#39;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="st">1000</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="st">2</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="st">2</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="st">2</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="st">2</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="op">TXT</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> <span class="at">-q</span> <span class="at">-e</span> <span class="st">&quot;source(&#39;../../../R/sampler_refactor.R&#39;); run_sampler_refactor(&#39;sam2024.dat&#39;,&#39;bs_setup.dat&#39;,&#39;results&#39;,&#39;ebswp&#39;)&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="alternate-generated-data-run-casesebswpsammakefile" class="level2" data-number="7.2">
 <h2 data-number="7.2" class="anchored" data-anchor-id="alternate-generated-data-run-casesebswpsammakefile"><span class="header-section-number">7.2</span> Alternate: generated-data run (<code>cases/ebswpSAM/Makefile</code>)</h2>
 <p><code>cases/ebswpSAM/Makefile</code> runs:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./sam</span> <span class="at">-ind</span> data/sam<span class="op">&lt;</span>year<span class="op">&gt;</span>.dat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./sam</span> <span class="at">-ind</span> data/sam<span class="op">&lt;</span>year<span class="op">&gt;</span>.dat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Example:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> yr=2024</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> yr=2024</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Use this when <code>data/sam&lt;year&gt;.dat</code> exists (no underscore naming).</p>
 </section>
 <section id="consolidated-driver-year-ranges" class="level2" data-number="7.3">
 <h2 data-number="7.3" class="anchored" data-anchor-id="consolidated-driver-year-ranges"><span class="header-section-number">7.3</span> Consolidated driver (year ranges)</h2>
 <p>Use the single fishery driver to run ADMB over <code>data/samYYYY.dat</code> and write a rolled-up summary CSV:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> EBS_sampler_fishery.R start_year=1991 end_year=2024 nbs=1 levels=1,1,1,1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> EBS_sampler_fishery.R start_year=1991 end_year=2024 nbs=1 levels=1,1,1,1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Common options:</p>
 <ul>
 <li><code>start_year</code>, <code>end_year</code>: year range to run/read.</li>
@@ -2868,8 +2903,8 @@ N_{y,99,99,a} = \sum_k \sum_s N_{y,k,s,a}
 <li><code>io=true|false</code>: pass <code>-nox -io</code> to <code>sam</code> when needed.</li>
 </ul>
 <p>Summary-only example (no ADMB rerun):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> EBS_sampler_fishery.R start_year=1991 end_year=2024 run_sampler=false</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> cases/ebswpSAM</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> EBS_sampler_fishery.R start_year=1991 end_year=2024 run_sampler=false</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="key-ebswpsam-scripts" class="level2" data-number="7.4">
 <h2 data-number="7.4" class="anchored" data-anchor-id="key-ebswpsam-scripts"><span class="header-section-number">7.4</span> Key ebswpSAM scripts</h2>
@@ -2981,15 +3016,15 @@ N_{y,99,99,a} = \sum_k \sum_s N_{y,k,s,a}
 <section id="render-this-documentation" class="level1" data-number="10">
 <h1 data-number="10"><span class="header-section-number">10</span> Render This Documentation</h1>
 <p>From repository root:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render index.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render index.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This produces <code>index.html</code> in the repository root.</p>
 </section>
 <section id="push-to-github" class="level1" data-number="11">
 <h1 data-number="11"><span class="header-section-number">11</span> Push to GitHub</h1>
 <p>Typical update sequence:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add index.qmd index.html</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">&quot;Update sampler documentation&quot;</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin <span class="op">&lt;</span>branch<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add index.qmd index.html</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">&quot;Update sampler documentation&quot;</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin <span class="op">&lt;</span>branch<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If your repository uses GitHub Pages from root or <code>gh-pages</code>, commit <code>index.html</code> accordingly.</p>
 </section>
 <section id="troubleshooting" class="level1" data-number="12">
