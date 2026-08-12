@@ -13,7 +13,7 @@ compare_age_comps<-function(new_dat,old_dat,yrs_srv_age,maxage = max_age) {
 
   
 #remake new_long
-   new_long<-new_data %>% 
+   new_long<-new_dat %>% 
     pivot_longer(!year,names_to="age",values_to = "prop") %>% 
     mutate(age = as.numeric(age),assess = "new") %>%
     mutate(sex = ifelse(age<=maxage,"F","M")) %>%

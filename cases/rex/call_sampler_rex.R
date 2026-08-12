@@ -6,16 +6,32 @@ library(data.table)
 library(xtable)
 library(ggthemes)
 library(RODBC)
-mytheme <- theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank(), panel.grid.major.y = element_blank())# element_line(colour="grey60", linetype="dashed"))
-mytheme <- mytheme + theme(text=element_text(size=18)) + theme(axis.title.x=element_text(size=22) ,axis.title.y=element_text(size=22))
-mytheme <- mytheme + theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank() )
-mytheme <- mytheme + theme( panel.background = element_rect(fill="white"), panel.border = element_rect(colour="black", fill=NA, size=.5))
+mytheme <- theme(
+  text = element_text(size = 18),
+  axis.title.x = element_text(size = 22),
+  axis.title.y = element_text(size = 22),
+  panel.grid.major.x = element_blank(),
+  panel.grid.minor.x = element_blank(),
+  panel.grid.major.y = element_blank(),
+  panel.background = element_rect(fill = "white"),
+  panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5)
+)
+#where to write input files for sam.exe
+outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2026/goa_rex/data/sampler"
+#make results folder
+dir.create(file.path(outdir))
+dir.create(file.path(outdir,"results"))
 
-#where to write input files for sam.tpl
-outdir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2025/rex/data/sampler"
+#2025 September run accepted for Nov/2026 base case:
+run_dir2<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2025/rex/runs/run_14_asfor7_ageing_error"
 
-#previously accepted run's fishery age data:
+#2021 accepted run (which did not use sampler)
 run_dir<-"C:/Users/carey.mcgilliard/Work/FlatfishAssessments/2025/rex_cie_review/runs/run1_2021_accepted"
+#compare to the fishery age data from the previously accepted model
+#(I made a .csv with the fishery age data that isn't formatted for ss3 to make this easier, so that manual step would be needed again to do the comparison to old stuff)
+#old_data<-read.csv(file.path(run_dir2,"rex_fish_ages_2025_sept_accepted.csv"))
+old_data<-read.csv(file.path(run_dir2,"rex_fish_ages_2021_sept_accepted.csv"))
+
 
 # rex sole call to make the input data
 GitDir<-"C:/GitProjects/sampler/R/"
@@ -33,6 +49,7 @@ SetBS(n=1) #set n = 1 if doing no bootstraps, this writes out an input file for 
 est = TRUE
 io = TRUE
 
+#First put sam.exe in the working folder or in your local environment variables
 #Loop over years and run sam (assumes sam.exe source folder is in your account's environment path or in the outdir):
 #Note: 1992 catches are not reported as domestic- sam1992.dat catch biomass filled manually
 for (y in 1:length(info$years)) {
@@ -54,10 +71,10 @@ if (est) {
 ctmp<-wtmp<-NULL
 for (i in 1:length(info$years)) {
   print(info$years[i])
-  wtmp <- rbind(wtmp,read_table(file = here::here(file.path("results",paste0("sex_wtage",info$years[i],".rep"))),col_names=FALSE))
-  ctmp <- rbind(ctmp,read_table(file = here::here(file.path("results",paste0("sex_catage",info$years[i],".rep"))),col_names=FALSE))
+  wtmp <- rbind(wtmp,read_table(file = file.path(outdir,"results",paste0("sex_wtage",info$years[i],".rep")),col_names=FALSE))
+  ctmp <- rbind(ctmp,read_table(file = file.path(outdir,"results",paste0("sex_catage",info$years[i],".rep")),col_names=FALSE))
 }
-names(ctmp) <- names(wtmp) <- c("bs","id","year","sex",minage:maxage)
+names(ctmp) <- names(wtmp) <- c("bs","id","year","sex","k",minage:maxage)
 wtage <- wtmp
 catage <- ctmp
 
@@ -89,7 +106,7 @@ write_csv(WideComp,"results/catagesex.csv")
 #Plot the aggregated catch-at-age data
 g<-ggplot(cdfp,aes(x=age,y=catch,fill=sex,color=sex)) + 
 geom_bar(position="dodge2", stat='identity') + theme_few()+ facet_wrap(.~year)
-ggsave(filename = "results/catageplot.png",plot = g,device = "png")
+ggsave(filename = file.path(outdir,"results","catageplot.png"),plot = g,device = "png")
 
 #Aggregate catch-at-age data over bootstraps and format for fm.tpl data inputs  
 #Look for results/catagesex.csv
@@ -106,7 +123,7 @@ ExpandWts<-ExpandWts %>% replace_na(list(weight=0))
 WideWts<-ExpandWts %>% group_by(year,age) %>% select(year,age,weight) %>% spread(age,weight)
 WideWts
 
-write_csv(WideWts,"results/wtagesex.csv")
+write_csv(WideWts,file.path(outdir,"results/wtagesex.csv"))
 
 
 # tswt <- pivot_wider(wdf,names_from=c(sex,age),values_from=weight)
@@ -115,19 +132,16 @@ write_csv(WideWts,"results/wtagesex.csv")
 w<-ggplot(wdfp,aes(x=age,y=weight,fill=sex,color=sex)) + 
 geom_line(linewidth=2, stat='identity') + theme_few()+ facet_wrap(.~year)
 
-ggsave(filename = "results/wtageplot.png",plot = w,device = "png")
+ggsave(filename = file.path(outdir,"results/wtageplot.png"),plot = w,device = "png")
 
-#compare to the fishery age data from the previously accepted model
-old_data<-read.csv(file.path(run_dir,"rex_fish_ages_2021_accepted.csv"))
-
-new_data<-WideComp %>% select(-c('0'))
 source("C:/GitProjects/sampler/cases/rex/compare_age_comps.R")
+new_data<-WideComp # %>% select(-c('0'))
 p<-compare_age_comps(new_dat=new_data,old_dat=old_data,yrs_srv_age=info$years,maxage = maxage)
 p$plot_diffs
-ggsave(filename = "results/old_new_age_diffs.png",plot = p$plot_diffs,device = "png")
+ggsave(filename = file.path(outdir,"results/old_new_age_diffs.png"),plot = p$plot_diffs,device = "png")
 
 p$plot_overlay
-ggsave(filename = "results/old_new_age_overlay.png",plot = p$plot_overlay,device = "png")
+ggsave(filename = file.path(outdir,"results/old_new_age_overlay.png"),plot = p$plot_overlay,device = "png")
 
 
 
