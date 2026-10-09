@@ -60,6 +60,18 @@ model_data::model_data(int argc,char * argv[]) : ad_comm(argc,argv)
   if (argc > 1)
   {
     int on=0;
+    if ( (on=option_match(ad_comm::argc,ad_comm::argv,"-rseed"))>-1)
+    {
+      if (on>ad_comm::argc-2 | ad_comm::argv[on+1][0] == '-')
+      {
+        cerr << "Invalid number of rseed arguements, command line option -rseed ignored" << endl;
+      }
+      else
+      {
+        rseed = atoi(ad_comm::argv[on+1]);
+        cout<<  "Currently using "<<adstring(ad_comm::argv[on+1])<<" as random number seed for sims"<<endl;
+      }
+    }
     if ( (on=option_match(argc,argv,"-io"))>-1)
     {
       do_check = 1;
